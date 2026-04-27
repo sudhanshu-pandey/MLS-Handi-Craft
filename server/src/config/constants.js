@@ -31,13 +31,6 @@ export const DB_CONFIG = {
   MONGO_URI: process.env.MONGO_URI,
 };
 
-// Email Configuration (for future use)
-export const EMAIL_CONFIG = {
-  SERVICE: process.env.EMAIL_SERVICE || "gmail",
-  USER: process.env.EMAIL_USER,
-  PASSWORD: process.env.EMAIL_PASSWORD,
-};
-
 // OTP Configuration
 export const OTP_CONFIG = {
   LENGTH: 6,

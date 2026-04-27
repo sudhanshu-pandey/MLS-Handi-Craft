@@ -295,40 +295,6 @@ const cancelOrderWithRefund = async (req, res) => {
         }
       }, 100);
     } 
-    // else if (order.paymentMethod === 'stripe') {
-    //   refundId = `RFND_STRIPE_${Date.now()}`;
-      
-    //   // Process Stripe refund in background
-    //   setTimeout(async () => {
-    //     try {
-    //       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-    //       if (order.paymentIntentId) {
-    //         const refundResponse = await stripe.refunds.create({
-    //           payment_intent: order.paymentIntentId,
-    //           amount: refundAmount * 100 // Stripe expects amount in cents
-    //         });
-            
-    //         // Update order with actual refund ID
-    //         await Order.findByIdAndUpdate(order._id, {
-    //           refundId: refundResponse.id,
-    //           refundStatus: 'completed'
-    //         });
-            
-    //         console.log(`[Stripe Refund] Refund completed: ${refundResponse.id}`);
-    //       }
-    //     } catch (err) {
-    //       console.error("Stripe refund error:", err.message);
-    //       // Update refund status to failed
-    //       await Order.findByIdAndUpdate(order._id, {
-    //         refundStatus: 'failed'
-    //       });
-    //     }
-    //   }, 100);
-    // } else if (order.paymentMethod === 'cod' || order.paymentMethod === 'netbanking' || order.paymentMethod === 'card' || order.paymentMethod === 'upi') {
-    //   // For COD and other methods, mark as manual refund
-    //   refundId = `RFND_MANUAL_${Date.now()}`;
-    // }
 
     // Update order status and add refund info immediately
     order.status = 'cancelled';
