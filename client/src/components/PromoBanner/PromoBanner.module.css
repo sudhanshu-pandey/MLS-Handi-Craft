@@ -1,0 +1,39 @@
+.banner {
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+  color: var(--bg-white);
+  padding: var(--spacing-sm) 0;
+  text-align: center;
+  font-weight: 700;
+  animation: slide 0.3s ease-in;
+}
+
+.banner p {
+  margin: 0;
+  color: var(--bg-white);
+  font-size: var(--font-size-sm);
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .banner p {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner {
+    padding: 0.75rem 0;
+  }
+
+  .banner p {
+    font-size: 0.7rem;
+  }
+}

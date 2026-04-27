@@ -1,0 +1,199 @@
+.aboutPage {
+  background: var(--bg-light);
+}
+
+.sectionSpace {
+  padding: 3rem 0;
+}
+
+.aboutHero {
+  background: linear-gradient(rgba(245, 245, 245, 0.88), rgba(237, 234, 231, 0.88));
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+}
+
+.aboutHeroContent {
+  text-align: center;
+  animation: aboutFadeIn 0.8s ease;
+}
+
+.aboutEyebrow {
+  color: var(--secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.aboutHero h1 {
+  color: var(--primary);
+  margin-top: 0.35rem;
+  margin-bottom: 0.7rem;
+}
+
+.aboutHero p {
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--text-light);
+}
+
+.storyGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.storyImageWrap {
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid rgba(107, 52, 24, 0.12);
+}
+
+.storyImageWrap img {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  object-fit: cover;
+  display: block;
+}
+
+.storyContent h2 {
+  color: var(--primary);
+  margin-bottom: 0.8rem;
+}
+
+.storyContent p {
+  margin-bottom: 0.9rem;
+}
+
+.aboutButtonLink {
+  display: inline-flex;
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.featureCard {
+  text-align: center;
+  background: var(--bg-white);
+}
+
+.featureIcon {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(107, 52, 24, 0.1);
+  border-radius: 50%;
+  margin-bottom: 0.75rem;
+  font-size: 1.2rem;
+}
+
+.featureCard h3 {
+  color: var(--primary);
+  margin-bottom: 0.35rem;
+}
+
+.teamSection {
+  background: var(--bg-white);
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.teamCard {
+  text-align: center;
+  background: var(--bg-card);
+}
+
+.teamCard:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.teamImage {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 0.7rem;
+  border: 3px solid rgba(107, 52, 24, 0.16);
+}
+
+.teamCard h3 {
+  color: var(--primary);
+  margin-bottom: 0.2rem;
+}
+
+.aboutCta {
+  background: var(--bg-card);
+}
+
+.ctaBox {
+  text-align: center;
+  background: var(--bg-white);
+  border-radius: 16px;
+  padding: 2rem 1.2rem;
+  border: 1px solid rgba(107, 52, 24, 0.12);
+  box-shadow: var(--shadow-sm);
+}
+
+.ctaBox h2 {
+  color: var(--primary);
+  margin-bottom: 0.4rem;
+}
+
+.ctaBox p {
+  margin-bottom: 1rem;
+}
+
+@keyframes aboutFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .sectionSpace {
+    padding: 4.2rem 0;
+  }
+
+  .storyGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .featuresGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teamGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .featuresGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

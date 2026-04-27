@@ -1,0 +1,16 @@
+<svg viewBox="0 0 300 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="potteryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#CD853F;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A0522D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B4513;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="300" height="250" fill="#faf5f0"/>
+  <ellipse cx="150" cy="70" rx="40" ry="25" fill="url(#potteryGradient)" stroke="#603115" stroke-width="2"/>
+  <path d="M 110 95 Q 105 140 115 180 Q 125 190 150 190 Q 175 190 185 180 Q 195 140 190 95" fill="url(#potteryGradient)" stroke="#603115" stroke-width="2"/>
+  <ellipse cx="150" cy="190" rx="40" ry="12" fill="#8B4513" stroke="#603115" stroke-width="1"/>
+  <path d="M 95 120 Q 90 140 100 160" stroke="#d4a574" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M 205 120 Q 210 140 200 160" stroke="#d4a574" stroke-width="2" fill="none" opacity="0.6"/>
+  <text x="150" y="220" font-family="Georgia, serif" font-size="16" font-weight="bold" fill="#603115" text-anchor="middle">Pottery</text>
+</svg>

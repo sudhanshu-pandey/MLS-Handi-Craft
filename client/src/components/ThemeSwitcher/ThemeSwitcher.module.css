@@ -1,0 +1,266 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.modeText {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.palette {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.moreWrap {
+  position: relative;
+}
+
+.moreButton {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.moreButton:hover {
+  transform: scale(1.12);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.extraPalette {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 0.4rem;
+  padding: 0.45rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-md);
+  z-index: 120;
+}
+
+.colorDot {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.colorDot:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+.dotBrown {
+  background: #6B3418;
+}
+
+.dotTerracotta {
+  background: #A0522D;
+}
+
+.dotOlive {
+  background: #8A8F3A;
+}
+
+.dotBlue {
+  background: #2F80ED;
+}
+
+.dotGreen {
+  background: #6AA84F;
+}
+
+.dotPurple {
+  background: #6C4AB6;
+}
+
+.dotOrange {
+  background: #D98C2B;
+}
+
+.dotTeal {
+  background: #1F8A8A;
+}
+
+.dotCrimson {
+  background: #B23A48;
+}
+
+.dotIndigo {
+  background: #4B5DCC;
+}
+
+.dotCocoa {
+  background: #7A4B3A;
+}
+
+.dotMustard {
+  background: #B68A2D;
+}
+
+.dotWine {
+  background: #7D2E4F;
+}
+
+.modeToggle {
+  width: 42px;
+  height: 22px;
+  min-width: 42px;
+  min-height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: background-color 0.3s ease;
+}
+
+.modeToggle.dark {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.toggleThumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+.dark .toggleThumb {
+  transform: translateX(20px);
+  background: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    gap: 0.35rem;
+  }
+
+  .modeText {
+    font-size: 0.68rem;
+  }
+
+  .palette {
+    gap: 0.28rem;
+    max-width: none;
+  }
+
+  .colorDot {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    min-height: 14px;
+  }
+
+  .moreButton {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    font-size: 0.68rem;
+  }
+
+  .modeToggle {
+    width: 36px;
+    height: 20px;
+    min-width: 36px;
+    min-height: 20px;
+  }
+
+  .toggleThumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dark .toggleThumb {
+    transform: translateX(16px);
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    gap: 0.28rem;
+  }
+
+  .palette {
+    gap: 0.22rem;
+  }
+
+  .colorDot {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+  }
+
+  .moreButton {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    min-height: 14px;
+    font-size: 0.62rem;
+  }
+
+  .modeToggle {
+    width: 32px;
+    height: 18px;
+    min-width: 32px;
+    min-height: 18px;
+    padding: 1px;
+  }
+
+  .toggleThumb {
+    width: 14px;
+    height: 14px;
+  }
+
+  .dark .toggleThumb {
+    transform: translateX(14px);
+  }
+
+  .extraPalette {
+    grid-template-columns: repeat(3, auto);
+    gap: 0.3rem;
+    padding: 0.35rem;
+  }
+
+  .modeText {
+    display: none;
+  }
+}

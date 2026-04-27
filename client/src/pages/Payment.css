@@ -1,0 +1,209 @@
+/* ===== Payment Page Styles ===== */
+
+/* Login required message */
+.loginRequiredTitle {
+  color: var(--text-dark);
+}
+
+.loginRequiredText {
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+/* Order not found message */
+.orderNotFoundTitle {
+  color: var(--text-dark);
+}
+
+.orderNotFoundText {
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+/* Payment timer container */
+.paymentTimerContainer {
+  padding: 12px;
+  background-color: #fff3cd;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.paymentTimerText {
+  color: #856404;
+  margin: 0;
+}
+
+.paymentTimerValue {
+  font-size: 18px;
+  margin-left: 8px;
+}
+
+/* Payment expired message */
+.paymentExpiredContainer {
+  padding: 12px;
+  background-color: #ffebee;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.paymentExpiredMessage {
+  color: #c00;
+  margin: 0;
+}
+
+/* Order summary */
+.orderSummaryTitle {
+  margin-bottom: 20px;
+  color: #333;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.orderSummaryItemsSection {
+  margin-bottom: 20px;
+}
+
+.orderSummaryItemsLabel {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.orderItemCard {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.orderItemCard:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(91, 141, 238, 0.15);
+  transform: translateY(-2px);
+}
+
+.orderItemImage {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  background: white;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.orderItemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.orderItemName {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.orderItemDescription {
+  margin: 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.orderItemMeta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.orderItemMetaLabel {
+  font-size: 11px;
+  color: #666;
+}
+
+.orderItemQuantity {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.orderItemPrice {
+  font-size: 11px;
+  color: #666;
+}
+
+.orderItemTotal {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: right;
+  min-width: 60px;
+}
+
+.orderItemTotalPrice {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* Price breakdown section */
+.priceBreakdownSection {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.priceBreakdownLabel {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priceBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.priceBreakdownRowLabel {
+  font-size: 13px;
+  color: #666;
+}
+
+.priceBreakdownRowValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .orderItemCard {
+    flex-direction: column;
+  }
+  
+  .orderItemImage {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  
+  .orderItemTotal {
+    justify-content: space-between;
+    width: 100%;
+  }
+}

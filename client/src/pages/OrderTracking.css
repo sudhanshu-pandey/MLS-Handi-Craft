@@ -1,0 +1,582 @@
+/* ===== Order Tracking Page Styles ===== */
+
+/* Page title */
+.pageTitle {
+  margin-bottom: 16px;
+}
+
+/* Breadcrumb navigation */
+.breadcrumbContainer {
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+/* Timeline section */
+.timelineSection {
+  padding: 20px;
+}
+
+/* Status step styling */
+.statusStep {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.statusStepDescription {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-light);
+}
+
+/* Delivery information */
+.deliveryInfo {
+  padding: 20px;
+}
+
+.deliveryTitle {
+  margin-bottom: 14;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.deliveryAddress {
+  background-color: #f9f9f9;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.addressLine {
+  margin: 0;
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.addressPhone {
+  margin: 0;
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Order items section */
+.orderItemsTitle {
+  margin-bottom: 14;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.orderItemsContainer {
+  margin-bottom: 16px;
+}
+
+/* Order item card */
+.orderItemCard {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.orderItemCard:hover {
+  background-color: #f0f0f0;
+  border-color: #d0d0d0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.orderItemImage {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.orderItemDetails {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.orderItemInfo {
+  flex: 1;
+}
+
+.orderItemName {
+  color: var(--text-dark);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.orderItemName:hover {
+  color: var(--primary);
+}
+
+.orderItemMeta {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.orderItemCategory {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.orderItemTotal {
+  text-align: right;
+  min-width: 80px;
+}
+
+.orderItemTotalPrice {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #2ecc71;
+}
+
+.orderItemUnitPrice {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Price breakdown divider */
+.priceDivider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 14px 0;
+}
+
+/* Price breakdown section */
+.priceBreakdownContainer {
+  margin-top: 14px;
+}
+
+.priceBreakdownTitle {
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.priceRowLabel {
+  color: #666;
+  font-size: 13px;
+}
+
+.priceRowValue {
+  color: #333;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.priceRowDiscount {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.priceRowDeliveryFree {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Order total */
+.orderTotalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 10px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.orderTotalLabel {
+  color: #333;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.orderTotalPrice {
+  color: #2ecc71;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Action buttons section */
+.actionButtonsSection {
+  padding: 16px;
+}
+
+.actionButtonsTitle {
+  margin-bottom: 14;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.actionButtonsGroup {
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+}
+
+/* Refund modal styles */
+.refundModal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.refundModalContent {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.refundModalTitle {
+  margin-top: 0;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+}
+
+/* Refund breakdown */
+.refundBreakdown {
+  background-color: #f9f9f9;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.refundBreakdownLabel {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.refundBreakdownGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.refundBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.refundBreakdownRowLabel {
+  color: #666;
+  font-size: 13px;
+}
+
+.refundBreakdownRowValue {
+  color: #333;
+  font-weight: '500';
+  font-size: 13px;
+}
+
+/* Refund total */
+.refundTotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 10px;
+  background-color: #e8f5e9;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.refundTotalLabel {
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.refundTotalPrice {
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/* Refund timeline */
+.refundTimeline {
+  background-color: #fff3cd;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+  margin: 16px 0;
+}
+
+.refundTimelineText {
+  margin: 0;
+  font-size: 13px;
+  color: #856404;
+}
+
+/* Modal buttons */
+.modalButtonsGroup {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* Cancelled order message */
+.cancelledOrderMessage {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.cancelledOrderTitle {
+  color: #856404;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.cancelledOrderText {
+  margin: 8px 0;
+  font-size: 13px;
+  color: #856404;
+}
+
+.cancelledOrderRefundId {
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .pageTitle {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 860px) {
+  .pageTitle {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .orderItemCard {
+    flex-direction: column;
+  }
+  
+  .orderItemDetails {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .orderItemTotal {
+    text-align: left;
+  }
+  
+  .refundModalContent {
+    width: 95%;
+  }
+
+  .timelineSection {
+    padding: 16px;
+  }
+
+  .deliveryInfo {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageTitle {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .timelineSection {
+    padding: 12px;
+  }
+
+  .deliveryInfo {
+    padding: 12px;
+  }
+
+  .deliveryTitle,
+  .orderItemsTitle {
+    font-size: 15px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .orderItemCard {
+    padding: 10px;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+
+  .orderItemImage {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .orderItemName {
+    font-size: 12px;
+  }
+
+  .orderItemUnitPrice {
+    font-size: 10px;
+  }
+
+  .orderItemTotalPrice {
+    font-size: 12px;
+  }
+
+  .addressLine,
+  .addressPhone {
+    font-size: 12px;
+  }
+
+  .priceRow {
+    padding: 8px 0;
+  }
+
+  .priceRowLabel,
+  .priceRowValue {
+    font-size: 12px;
+  }
+
+  .priceDivider {
+    margin: 10px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageTitle {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .breadcrumbContainer {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .timelineSection {
+    padding: 10px;
+  }
+
+  .deliveryInfo {
+    padding: 10px;
+  }
+
+  .deliveryTitle,
+  .orderItemsTitle {
+    font-size: 13px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .orderItemCard {
+    padding: 8px;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+
+  .orderItemImage {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .orderItemName {
+    font-size: 11px;
+  }
+
+  .orderItemUnitPrice {
+    font-size: 9px;
+  }
+
+  .orderItemTotalPrice {
+    font-size: 11px;
+  }
+
+  .addressLine,
+  .addressPhone {
+    font-size: 11px;
+  }
+
+  .priceRow {
+    padding: 6px 0;
+  }
+
+  .priceRowLabel,
+  .priceRowValue {
+    font-size: 11px;
+  }
+
+  .priceDivider {
+    margin: 8px 0;
+  }
+
+  .statusStep {
+    gap: 2px;
+  }
+
+  .statusStepDescription {
+    font-size: 10px;
+  }
+
+  .refundModalContent {
+    width: 98%;
+    padding: 12px !important;
+  }
+}

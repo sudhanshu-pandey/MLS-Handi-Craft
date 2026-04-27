@@ -1,0 +1,249 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  width: 100%;
+}
+
+/* Add to Cart Button */
+.addButton {
+  padding: 10px 16px;
+  background-color: var(--primary-color);
+  color: var(--text-on-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 140px;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.2);
+}
+
+.addButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.4);
+}
+
+.addButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.addButton.disabled,
+.addButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Quantity Controls Container */
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+
+.quantityControls:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.15);
+}
+
+/* Control Buttons */
+.controlButton {
+  padding: 8px 12px;
+  background-color: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  user-select: none;
+}
+
+.controlButton:hover:not(:disabled) {
+  background-color: var(--primary-color);
+  color: var(--text-on-primary);
+  border-radius: 0%;
+}
+
+.controlButton:active:not(:disabled) {
+  background-color: var(--primary-color);
+}
+
+.controlButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* Quantity Display */
+.quantityDisplay {
+  padding: 8px 16px;
+  min-width: 50px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  background-color: white;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+}
+
+.quantity {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.loadingSpinner {
+  display: none;
+}
+
+/* Success Message */
+.successMessage {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  padding: 8px 12px;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Save for Later Button */
+.saveButton {
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(255, 71, 87, 0.2);
+}
+
+.saveButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(255, 71, 87, 0.3);
+}
+
+.saveButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveButton.saved {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .addButton {
+    width: 100%;
+    min-width: auto;
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .quantityControls {
+    width: 100%;
+  }
+
+  .controlButton {
+    flex: 1;
+    min-width: 32px;
+    height: 32px;
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+
+  .quantityDisplay {
+    flex: 1;
+    padding: 6px 8px;
+    height: 32px;
+  }
+
+  .quantity {
+    font-size: 14px;
+  }
+}
+
+/* Extra small screens like iPhone SE */
+@media (max-width: 380px) {
+  .addButton {
+    font-size: 12px;
+    padding: 8px 10px;
+    min-height: 38px;
+  }
+
+  .quantityControls {
+    width: 100%;
+  }
+
+  .controlButton {
+    min-width: 28px;
+    height: 28px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .quantityDisplay {
+    padding: 4px 6px;
+    height: 28px;
+    min-width: 40px;
+  }
+
+  .quantity {
+    font-size: 12px;
+  }
+
+  .successMessage {
+    font-size: 11px;
+    padding: 6px 10px;
+    top: -35px;
+  }
+}

@@ -1,0 +1,166 @@
+/* ===== Products Page Styles ===== */
+
+/* Error Box */
+.errorBox {
+  padding: 20px;
+  color: #d32f2f;
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  border-left: 4px solid #d32f2f;
+}
+
+/* Loading Box */
+.loadingBox {
+  padding: 60px 20px;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Mobile Filters Button Container */
+.mobileFiltersButton {
+  display: none;
+  margin-bottom: 20px;
+}
+
+/* Filter Button */
+.filterButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #f5f5f5;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filterButton.active {
+  background-color: #ff6b35;
+  color: #fff;
+}
+
+/* Filter Count Badge */
+.filterCountBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* No Results Container */
+.noResultsContainer {
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.noResultsIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.noResultsTitle {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+.noResultsDescription {
+  margin-bottom: 20px;
+  color: #999;
+}
+
+/* Pagination Container */
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+/* Pagination Button */
+.paginationButton {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.paginationButton:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
+}
+
+.paginationButton.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Pagination Numbers Container */
+.paginationNumbers {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Pagination Info Text */
+.paginationInfo {
+  text-align: center;
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Desktop Layout */
+.desktopFilters {
+  width: 25%;
+  min-width: 300px;
+}
+
+/* ===== Responsive Layout ===== */
+
+/* Desktop Layout (> 768px) - Show sidebar, hide mobile button */
+@media (min-width: 769px) {
+  .desktopFilters {
+    display: block !important;
+    width: 25%;
+    min-width: 300px;
+  }
+
+  .mobileFiltersButton {
+    display: none !important;
+  }
+}
+
+/* Mobile Layout (< 768px) - Hide sidebar, show mobile button */
+@media (max-width: 768px) {
+  .desktopFilters {
+    display: none !important;
+  }
+
+  .mobileFiltersButton {
+    display: block !important;
+  }
+}

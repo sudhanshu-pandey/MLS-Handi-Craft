@@ -1,0 +1,18 @@
+<svg viewBox="0 0 300 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="woodGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D2B48C;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B6914;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="300" height="250" fill="#faf5f0"/>
+  <rect x="80" y="80" width="140" height="120" rx="8" fill="url(#woodGradient)" stroke="#603115" stroke-width="2"/>
+  <line x1="85" y1="85" x2="215" y2="85" stroke="#603115" stroke-width="1"/>
+  <line x1="85" y1="140" x2="215" y2="140" stroke="#603115" stroke-width="1"/>
+  <rect x="100" y="100" width="40" height="30" fill="#d4a574" opacity="0.6" rx="3"/>
+  <rect x="160" y="100" width="40" height="30" fill="#d4a574" opacity="0.6" rx="3"/>
+  <circle cx="90" cy="90" r="3" fill="#d4a574"/>
+  <circle cx="210" cy="90" r="3" fill="#d4a574"/>
+  <text x="150" y="215" font-family="Georgia, serif" font-size="18" font-weight="bold" fill="#603115" text-anchor="middle">Wooden Box</text>
+</svg>

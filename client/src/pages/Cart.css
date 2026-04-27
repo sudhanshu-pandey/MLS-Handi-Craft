@@ -1,0 +1,178 @@
+/* ===== Cart Page Styles ===== */
+
+/* Page title */
+.pageTitle {
+  margin-bottom: 16px;
+}
+
+/* Empty cart message */
+.emptyCartCard {
+  padding: 24px;
+  text-align: center;
+}
+
+.emptyCartTitle {
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+
+.emptyCartMessage {
+  margin-bottom: 24px;
+}
+
+/* Cart item container */
+.cartItemContainer {
+  display: grid;
+  grid-template-columns: minmax(90px, 20%) 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Cart item image */
+.cartItemImage {
+  width: 100%;
+  max-width: 90px;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* Wishlist item image */
+.wishlistItemImage {
+  width: 100%;
+  max-width: 90px;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* Product name in cart */
+.productName {
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.wishlistProductName {
+  color: var(--text-dark);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Price section */
+.priceSection {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.originalPrice {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.currentPrice {
+  font-weight: bold;
+  color: var(--text-dark);
+}
+
+.wishlistPriceSection {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Quantity controls container */
+.quantityControlsContainer {
+  margin-bottom: 10px;
+}
+
+/* Action buttons */
+.actionButtonsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: fit-content;
+}
+
+.actionButton {
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+/* Wishlist section */
+.wishlistSection {
+  margin-top: 18px;
+}
+
+.wishlistHeader {
+  margin-bottom: 10px;
+}
+
+.wishlistItem {
+  margin-top: 10px;
+}
+
+/* Price summary section */
+.priceSummaryTitle {
+  margin-bottom: 10px;
+}
+
+/* Coupon applied badge */
+.couponAppliedBadge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+  color: #2e7d32;
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.couponCloseButton {
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Coupon input section */
+.couponInputSection {
+  margin-top: 10px;
+}
+
+.couponError {
+  color: var(--error-color);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Checkout button */
+.checkoutButton {
+  display: block;
+  margin-top: 12px;
+  width: 100%;
+  text-align: center;
+}
+
+.checkoutButtonHelper {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 860px) {
+  .cartItemContainer {
+    grid-template-columns: minmax(90px, 20%) 1fr auto;
+  }
+}

@@ -1,0 +1,26 @@
+<svg viewBox="0 0 300 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dhokraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B8860B;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#CD7F32;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B4513;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="300" height="250" fill="#faf5f0"/>
+  <!-- Elephant body -->
+  <ellipse cx="150" cy="130" rx="45" ry="40" fill="url(#dhokraGradient)" stroke="#603115" stroke-width="2"/>
+  <!-- Elephant legs -->
+  <rect x="125" y="160" width="8" height="40" rx="4" fill="url(#dhokraGradient)" stroke="#603115" stroke-width="1"/>
+  <rect x="145" y="160" width="8" height="40" rx="4" fill="url(#dhokraGradient)" stroke="#603115" stroke-width="1"/>
+  <rect x="167" y="160" width="8" height="40" rx="4" fill="url(#dhokraGradient)" stroke="#603115" stroke-width="1"/>
+  <!-- Trunk -->
+  <path d="M 130 140 Q 115 160 120 180" stroke="#603115" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- Head -->
+  <circle cx="170" cy="110" r="18" fill="url(#dhokraGradient)" stroke="#603115" stroke-width="2"/>
+  <!-- Ear -->
+  <ellipse cx="160" cy="100" rx="12" ry="16" fill="url(#dhokraGradient)" stroke="#603115" stroke-width="1"/>
+  <!-- Eye -->
+  <circle cx="175" cy="108" r="2" fill="#d4a574"/>
+  <circle cx="165" cy="100" r="1.5" fill="#d4a574"/>
+  <text x="150" y="235" font-family="Georgia, serif" font-size="16" font-weight="bold" fill="#603115" text-anchor="middle">Dhokra</text>
+</svg>

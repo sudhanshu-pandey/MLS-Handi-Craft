@@ -1,0 +1,209 @@
+/* ===== Checkout Page Styles ===== */
+
+/* Page title */
+.checkoutTitle {
+  margin-bottom: 16px;
+}
+
+/* Empty cart warning */
+.emptyCheckoutCard {
+  padding: 30px;
+}
+
+.emptyCheckoutTitle {
+  color: var(--text-dark);
+  margin-bottom: 20px;
+}
+
+/* Login required message */
+.loginRequiredCard {
+  padding: 16px;
+}
+
+.loginRequiredTitle {
+  color: var(--text-dark);
+}
+
+.loginButtonsContainer {
+  display: flex;
+  gap: 8px;
+}
+
+/* Delivery address label */
+.deliveryAddressLabel {
+  margin-bottom: 10px;
+}
+
+/* Address radio button label */
+.addressRadioLabel {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  flex: 1;
+}
+
+.addressRadioCheckbox {
+  margin-top: 4px;
+}
+
+.addressDetails {
+  flex: 1;
+}
+
+.addressLabel {
+  margin-left: 6px;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-white));
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.addressName {
+  margin: 2px 0;
+  font-weight: 600;
+}
+
+.addressPhone {
+  margin: 2px 0;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.addressStreet {
+  margin: 2px 0;
+}
+
+.addressCity {
+  margin: 2px 0;
+}
+
+.addressLandmark {
+  margin: 2px 0;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* Edit buttons container */
+.editButtonsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Add new address section */
+.addNewAddressSection {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Payment method section */
+.paymentMethodLabel {
+  margin-bottom: 10px;
+}
+
+.paymentMethodButtonsContainer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ────────────────────────────────── */
+/* Responsive Design */
+/* ────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .checkoutTitle {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 860px) {
+  .checkoutTitle {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .editButtonsContainer {
+    flex-direction: row;
+  }
+
+  .paymentMethodButtonsContainer {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .checkoutTitle {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .addressName {
+    font-size: 14px;
+  }
+
+  .addressPhone,
+  .addressLandmark {
+    font-size: 11px;
+  }
+
+  .editButtonsContainer {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .paymentMethodButtonsContainer {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkoutTitle {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .emptyCheckoutCard {
+    padding: 20px;
+  }
+
+  .loginButtonsContainer {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .addressLabel {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .addressName {
+    font-size: 13px;
+    margin: 1px 0;
+  }
+
+  .addressPhone,
+  .addressLandmark,
+  .addressStreet,
+  .addressCity {
+    font-size: 10px;
+    margin: 1px 0;
+  }
+
+  .editButtonsContainer {
+    gap: 3px;
+  }
+
+  .paymentMethodButtonsContainer {
+    gap: 4px;
+  }
+
+  .addressRadioLabel {
+    gap: 6px;
+  }
+}

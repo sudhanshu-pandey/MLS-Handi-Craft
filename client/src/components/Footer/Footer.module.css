@@ -1,0 +1,537 @@
+.footer {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--bg-white);
+  padding-top: 0;
+  margin-top: 80px;
+}
+
+/* Newsletter Section */
+.newsletter {
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(96, 49, 21, 0.08) 100%);
+  padding: 48px 24px;
+  border-bottom: 1px solid rgba(212, 165, 116, 0.2);
+}
+
+.newsletterContent {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.newsletterText h3 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: #ffffff;
+}
+
+.newsletterText p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+
+.newsletterForm {
+  display: flex;
+  gap: 8px;
+}
+
+.newsletterForm input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid rgba(212, 165, 116, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.newsletterForm input::placeholder {
+  color: #999;
+}
+
+.newsletterForm button {
+  padding: 12px 32px;
+  background: var(--bg-white);
+  color: var(--primary);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.newsletterForm button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.successMsg {
+  position: absolute;
+  color: #4caf50;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Main Footer Content */
+.footerMain {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 32px;
+}
+
+.column h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  color: var(--secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.column p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 20px 0;
+}
+
+.column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.column ul li {
+  margin-bottom: 12px;
+}
+
+.column ul li a {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.column ul li a:hover {
+  color: var(--secondary-color);
+  padding-left: 4px;
+}
+
+/* Category Button Styling */
+.column ul li button {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.column ul li button:hover {
+  color: var(--secondary-color);
+  padding-left: 4px;
+}
+
+/* Social Links */
+.socialLinks {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.socialLinks a {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(212, 165, 116, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-color);
+  text-decoration: none;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(212, 165, 116, 0.3);
+}
+
+.socialLinks a:hover {
+  background: var(--secondary-color);
+  color: var(--primary);
+  transform: translateY(-4px);
+}
+
+/* Contact Info */
+.contactInfo {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.contactInfo p {
+  margin: 0 0 10px 0;
+}
+
+.contactInfo a {
+  color: var(--secondary-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.contactInfo a:hover {
+  color: #ffffff;
+}
+
+/* Payments */
+.payments {
+  display: flex;
+  gap: 12px;
+  font-size: 20px;
+}
+
+.payments span {
+  width: 40px;
+  height: 40px;
+  background: rgba(212, 165, 116, 0.1);
+  border: 1px solid rgba(212, 165, 116, 0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payments span:hover {
+  background: rgba(212, 165, 116, 0.2);
+}
+
+/* Trust Section */
+.trustSection {
+  background: transparent;
+  padding: 32px 24px;
+  border-top: 1px solid rgba(212, 165, 116, 0.2);
+  border-bottom: 1px solid rgba(212, 165, 116, 0.2);
+}
+
+.trustBadge {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  text-align: center;
+}
+
+.trustBadge span {
+  font-size: 14px;
+  color: #d4a574;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Footer Bottom */
+.footerBottom {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 24px;
+}
+
+.footerBottomContent {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.footerBottomContent p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bottomLinks {
+  display: flex;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bottomLinks a {
+  color: #d4a574;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.bottomLinks a:hover {
+  color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .newsletter {
+    padding: 40px 20px;
+  }
+  
+  .newsletterContent {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  .footerMain {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 40px 20px;
+  }
+  
+  .trustBadge {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .scrollToTop {
+    width: 45px;
+    height: 45px;
+    bottom: 20px;
+    right: 20px;
+    font-size: 20px;
+  }
+  
+  .newsletter {
+    padding: 30px 16px;
+  }
+  
+  .newsletterContent {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .newsletterText h3 {
+    font-size: 24px;
+  }
+  
+  .newsletterText p {
+    font-size: 13px;
+  }
+  
+  .inputWrapper {
+    flex-direction: column;
+  }
+  
+  .newsletterForm input {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  
+  .newsletterForm button {
+    padding: 12px 24px;
+    font-size: 13px;
+  }
+  
+  .footer {
+    margin-top: 60px;
+  }
+  
+  .footerMain {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 30px 16px;
+    gap: 20px;
+  }
+  
+  .column h4 {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  
+  .column p {
+    font-size: 13px;
+  }
+  
+  .column ul li a {
+    font-size: 13px;
+  }
+  
+  .social {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+  
+  .paymentIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .trustBadge {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .trustItem {
+    padding: 16px;
+  }
+  
+  .trustItem span {
+    font-size: 28px;
+  }
+  
+  .trustItem strong {
+    font-size: 14px;
+  }
+  
+  .trustItem p {
+    font-size: 11px;
+  }
+  
+  .footerBottomContent {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scrollToTop {
+    width: 40px;
+    height: 40px;
+    bottom: 16px;
+    right: 16px;
+    font-size: 18px;
+  }
+  
+  .newsletter {
+    padding: 20px 12px;
+  }
+  
+  .newsletterContent {
+    gap: 16px;
+  }
+  
+  .newsletterText h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .newsletterText p {
+    font-size: 12px;
+  }
+  
+  .newsletterForm input {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .newsletterForm button {
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+  
+  .successMsg {
+    font-size: 11px;
+  }
+  
+  .footerMain {
+    grid-template-columns: 1fr;
+    padding: 20px 12px;
+    gap: 16px;
+  }
+  
+  .column h4 {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  
+  .column p {
+    font-size: 12px;
+  }
+  
+  .column ul li {
+    margin-bottom: 10px;
+  }
+  
+  .column ul li a {
+    font-size: 12px;
+  }
+  
+  .social {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    gap: 10px;
+  }
+  
+  .socialLinks {
+    gap: 10px;
+    margin-top: 16px;
+  }
+  
+  .contactInfo {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .contactInfo p {
+    margin: 0 0 8px 0;
+  }
+  
+  .paymentIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .payments {
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  .trustSection {
+    padding: 24px 12px;
+  }
+  
+  .trustItem {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .trustItem span {
+    font-size: 24px;
+    min-width: 40px;
+  }
+  
+  .trustItem strong {
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+  
+  .trustItem p {
+    font-size: 10px;
+  }
+  
+  .footerBottom {
+    padding: 16px 12px;
+  }
+  
+  .footerBottomContent {
+    font-size: 11px;
+  }
+  
+  .bottomLinks {
+    gap: 8px;
+  }
+}

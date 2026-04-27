@@ -1,0 +1,17 @@
+<svg viewBox="0 0 300 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="marbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5F5F5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#D3D3D3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A9A9A9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="300" height="250" fill="#faf5f0"/>
+  <polygon points="150,50 200,120 180,200 120,200 100,120" fill="url(#marbleGradient)" stroke="#603115" stroke-width="2"/>
+  <line x1="130" y1="100" x2="170" y2="100" stroke="#d4a574" stroke-width="1" opacity="0.5"/>
+  <line x1="125" y1="140" x2="175" y2="140" stroke="#d4a574" stroke-width="1" opacity="0.5"/>
+  <circle cx="150" cy="75" r="5" fill="#d4a574"/>
+  <circle cx="140" cy="165" r="4" fill="#d4a574"/>
+  <circle cx="160" cy="170" r="4" fill="#d4a574"/>
+  <text x="150" y="225" font-family="Georgia, serif" font-size="18" font-weight="bold" fill="#603115" text-anchor="middle">Marble Art</text>
+</svg>
