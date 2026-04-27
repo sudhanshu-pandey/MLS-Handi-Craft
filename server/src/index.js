@@ -35,7 +35,8 @@ const corsOptions = {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       process.env.ADMIN_URL,
-      "https://handi-craft-frontend.onrender.com",
+      "https://mls-handi-craft.onrender.com",
+      "https://mls-handi-craft-admin.onrender.com"
     ];
 
     if (isLocalhost || allowedOrigins.includes(origin)) {
