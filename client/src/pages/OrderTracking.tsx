@@ -67,26 +67,104 @@ const OrderTracking = () => {
   const [showSupportModal, setShowSupportModal] = useState(false)
   const [supportMessage, setSupportMessage] = useState('')
   const [submittingSupport, setSubmittingSupport] = useState(false)
+  const [previousStatus, setPreviousStatus] = useState<string | null>(null)
+
+  // Fetch order data with cache busting
+  const fetchOrderData = async (skipStatusChangeCheck = false): Promise<Order | null> => {
+    if (!isLoggedIn || !orderId) {
+      setError('Please login to view order details')
+      setLoading(false)
+      return null
+    }
+
+    try {
+      // Add timestamp to bust cache and force fresh data from server
+      // Also add random number for extra cache busting
+      const timestamp = Date.now()
+      const random = Math.random()
+      const response = await api.request(`/orders/${orderId}?t=${timestamp}&r=${random}`)
+      const fetchedOrder = response.order
+      
+      console.log('✅ Order fetched:', {
+        orderId: fetchedOrder._id,
+        status: fetchedOrder.status,
+        timestamp: timestamp
+      })
+
+      setOrder(fetchedOrder)
+      setError(null)
+
+      // Detect status change and trigger callbacks
+      if (!skipStatusChangeCheck && previousStatus && previousStatus !== fetchedOrder.status) {
+        console.log(`🔄 Order status changed: ${previousStatus} → ${fetchedOrder.status}`)
+      }
+
+      // Update previous status for next comparison
+      setPreviousStatus(fetchedOrder.status)
+      setLoading(false)
+
+      return fetchedOrder
+    } catch (err: any) {
+      console.error('❌ Order fetch error:', err)
+      if (skipStatusChangeCheck) {
+        // Only set error on initial load
+        setError(err.message || 'Failed to load order details')
+        setLoading(false)
+      }
+      return null
+    }
+  }
 
   useEffect(() => {
-    const fetchOrder = async () => {
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let isMounted = true
+
+    const startPolling = async () => {
       if (!isLoggedIn || !orderId) {
         setError('Please login to view order details')
         setLoading(false)
         return
       }
 
-      try {
-        const response = await api.request(`/orders/${orderId}`)
-        setOrder(response.order)
-      } catch (err: any) {
-        setError(err.message || 'Failed to load order details')
-      } finally {
-        setLoading(false)
+      console.log('🚀 Starting order polling for:', orderId)
+
+      // Initial fetch with cache busting - NO skip status check needed for fresh data
+      setLoading(true)
+      const initialOrder = await fetchOrderData(true)
+      if (isMounted && initialOrder) {
+        setPreviousStatus(initialOrder.status)
+        console.log('✓ Initial order loaded:', initialOrder.status)
       }
+
+      // Setup polling interval with proper cleanup
+      // Use shorter interval (5 seconds) for better responsiveness
+      pollInterval = setInterval(async () => {
+        if (!isMounted) return
+
+        const updatedOrder = await fetchOrderData(false)
+
+        // Stop polling once order reaches terminal state
+        if (updatedOrder && (updatedOrder.status === 'delivered' || updatedOrder.status === 'cancelled')) {
+          if (pollInterval) {
+            clearInterval(pollInterval)
+            pollInterval = null
+            console.log(`✅ Polling stopped: order status is ${updatedOrder.status}`)
+          }
+        }
+      }, 5000) // Poll every 5 seconds for faster updates
     }
 
-    fetchOrder()
+    startPolling()
+
+    // Cleanup function
+    return () => {
+      console.log('🛑 Cleaning up order polling')
+      isMounted = false
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+      }
+    }
   }, [orderId, isLoggedIn])
 
   const canCancelOrder = order && order.paymentStatus === 'success'
@@ -178,9 +256,39 @@ const OrderTracking = () => {
     )
   }
 
-  // Calculate progress
-  const activeIndex = statusSteps.findIndex((entry) => entry === order.status)
+  // Calculate progress - with normalization for status variations
+  const normalizeStatus = (status: string): string => {
+    if (!status) return 'ordered'
+    // Handle potential status variations from backend
+    const normalized = status.toLowerCase().trim()
+    if (statusSteps.includes(normalized as any)) {
+      return normalized
+    }
+    // Fallback mapping for common variations
+    const statusMap: Record<string, string> = {
+      'order_placed': 'ordered',
+      'ordered': 'ordered',
+      'packed': 'packed',
+      'shipped': 'shipped',
+      'out_for_delivery': 'out_for_delivery',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
+    }
+    return statusMap[normalized] || 'ordered'
+  }
+
+  const normalizedStatus = normalizeStatus(order.status)
+  const activeIndex = statusSteps.findIndex((entry) => entry === normalizedStatus)
   const progressWidth = `${Math.max(8, ((activeIndex + 1) / statusSteps.length) * 100)}%`
+
+  // Debug logging
+  console.log('🔍 Order Status Debug:', {
+    rawStatus: order.status,
+    normalizedStatus: normalizedStatus,
+    activeIndex: activeIndex,
+    statusSteps: statusSteps,
+    progressWidth: progressWidth
+  })
 
   return (
     <div className={`container ${styles.page}`} data-testid="order-tracking-page">
@@ -205,12 +313,14 @@ const OrderTracking = () => {
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--text-light)' }}>Order ID</p>
                 <strong style={{ color: 'var(--text-dark)', letterSpacing: 0.5 }}>{order._id}</strong>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-light)' }}>Estimated delivery</p>
-                <strong style={{ color: 'var(--primary)' }}>
-                  {new Date(order.estimatedDelivery).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
-                </strong>
-              </div>
+              {normalizedStatus !== 'delivered' && order.status !== 'cancelled' && (
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-light)' }}>Estimated delivery</p>
+                  <strong style={{ color: 'var(--primary)' }}>
+                    {new Date(order.estimatedDelivery).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </strong>
+                </div>
+              )}
             </div>
 
             {/* Progress bar */}
@@ -220,21 +330,108 @@ const OrderTracking = () => {
 
             {/* Timeline */}
             <div className={styles.timeline}>
-              {statusSteps.map((step, index) => {
+              {/* Show "Order placed" step for cancelled orders */}
+              {order.status === 'cancelled' && (
+                <div 
+                  key="order-placed"
+                  className={styles.step + ' ' + styles.stepActive}
+                  style={{
+                    backgroundColor: 'transparent',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <span className={styles.stepIcon + ' ' + styles.stepIconActive}>
+                    📦
+                  </span>
+                  <strong>Order placed</strong>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 400, color: 'var(--text-light)' }}>We have received your order.</p>
+                </div>
+              )}
+              
+              {/* Show "Cancelled" step for cancelled orders */}
+              {order.status === 'cancelled' && (
+                <div 
+                  key="cancelled"
+                  className={styles.step + ' ' + styles.stepActive}
+                  style={{
+                    backgroundColor: '#fee2e2',
+                    borderRadius: '8px',
+                    borderLeft: '3px solid #dc2626'
+                  }}
+                >
+                  <span className={styles.stepIcon + ' ' + styles.stepIconActive}>
+                    ✕
+                  </span>
+                  <strong style={{ color: '#dc2626' }}>Cancelled</strong>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 400, color: '#991b1b' }}>Your order has been cancelled.</p>
+                </div>
+              )}
+
+              {/* Show normal timeline for non-cancelled orders */}
+              {order.status !== 'cancelled' && statusSteps.map((step, index) => {
                 const active = index <= activeIndex
+                const isDelivered = normalizedStatus === 'delivered' && step === 'delivered'
                 const meta = stepMeta[step]
+                
                 return (
-                  <div key={step} className={`${styles.step} ${active ? styles.stepActive : ''}`.trim()}>
+                  <div 
+                    key={step} 
+                    className={`${styles.step} ${active ? styles.stepActive : ''}`.trim()}
+                    style={isDelivered ? {
+                      backgroundColor: '#d4f4dd',
+                      borderRadius: '8px',
+                      transition: 'all 0.3s ease'
+                    } : {}}
+                  >
                     <span className={`${styles.stepIcon} ${active ? styles.stepIconActive : ''}`.trim()}>
                       {active ? meta.icon : ''}
                     </span>
-                    <strong>{meta.label}</strong>
+                    <strong style={isDelivered ? { color: '#10b981', fontWeight: '700' } : {}}>
+                      {meta.label}
+                    </strong>
                     {active && <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 400, color: 'var(--text-light)' }}>{meta.desc}</p>}
+                    {isDelivered && <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 500, color: '#10b981' }}>✓ Delivered</p>}
                   </div>
                 )
               })}
             </div>
           </section>
+
+          {/* Delivered Badge - Shows when order is delivered */}
+          {normalizedStatus === 'delivered' && (
+            <section className={styles.card} style={{ 
+              padding: 16,
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #10b981',
+              borderRadius: '8px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                justifyContent: 'center'
+              }}>
+                <span style={{ fontSize: '32px' }}>🎉</span>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{
+                    margin: '0 0 4px 0',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#10b981'
+                  }}>
+                    Order Delivered!
+                  </p>
+                  <p style={{
+                    margin: '0',
+                    fontSize: '13px',
+                    color: '#059669'
+                  }}>
+                    Your package has been successfully delivered. Thank you for shopping with us!
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Action Buttons */}
           {(canCancelOrder || order?.status === 'cancelled' || true) && (
@@ -348,6 +545,43 @@ const OrderTracking = () => {
               )}
             </section>
           )}
+
+          {/* Refresh Button */}
+          <section className={styles.card} style={{ padding: 16 }}>
+            <button
+              type="button"
+              onClick={async () => {
+                setLoading(true)
+                await fetchOrderData(true)
+              }}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                backgroundColor: '#4CAF50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.2s ease',
+                opacity: loading ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#45a049'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.3)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#4CAF50'
+                e.currentTarget.style.boxShadow = ''
+              }}
+            >
+              {loading ? '⏳ Refreshing...' : '🔄 Refresh Status'}
+            </button>
+          </section>
 
           {/* Delivery Info Section */}
           <section className={styles.card} style={{ padding: 16 }}>

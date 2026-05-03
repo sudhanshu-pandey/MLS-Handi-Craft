@@ -30,13 +30,13 @@ const productImages = (baseImage: string | undefined, additionalImages?: string[
   const images: string[] = [];
   
   // Add main image
-  if (baseImage) {
+  if (!additionalImages && baseImage) {
     images.push(baseImage);
   }
   
   // Add additional images if available
   if (additionalImages && additionalImages.length > 0) {
-    images.push(...additionalImages.filter(img => img && img !== baseImage));
+    images.push(...additionalImages.filter(img => img));
   }
   
   // If no images, return placeholder
@@ -116,7 +116,6 @@ const ProductDetails = () => {
     window.scrollTo(0, 0)
   }, [id])
 
-  const [selectedImage, setSelectedImage] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('description')
   const [quantity, setQuantity] = useState(1)
@@ -512,44 +511,24 @@ const ProductDetails = () => {
           <div className={styles.grid}>
             <section className={styles.card}>
               <div className={styles.gallery}>
-                <div className={styles.thumbs}>
-                  {images.map((image, index) => (
-                    <button
+                <div className={styles.imageGrid}>
+                  {images.slice(0, 4).map((image, index) => (
+                    <div
                       key={`${image}-${index}`}
-                      type="button"
-                      className={`${styles.thumbBtn} ${selectedImage === index ? styles.activeThumb : ''}`.trim()}
-                      onClick={() => setSelectedImage(index)}
+                      className={styles.gridImage}
                     >
                       <img 
                         src={image} 
-                        alt={`${product.name} thumbnail ${index + 1}`} 
+                        alt={`${product.name} image ${index + 1}`} 
                         loading="lazy"
                         onError={(e) => {
                           const img = e.target as HTMLImageElement;
-                          img.src = 'https://via.placeholder.com/80x80?text=Image';
+                          img.src = 'https://via.placeholder.com/400x400?text=Product+Image';
                         }}
                       />
-                    </button>
+                    </div>
                   ))}
                 </div>
-
-                <button
-                  type="button"
-                  className={styles.mainImage}
-                  onClick={() => setIsFullscreen(true)}
-                  data-testid="pdp-main-image"
-                >
-                  <img 
-                    src={images[selectedImage]} 
-                    alt={product.name} 
-                    loading="lazy"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.src = 'https://via.placeholder.com/500x500?text=Product+Image';
-                    }}
-                  />
-                  <span className={styles.zoomHint}>Zoom + Fullscreen</span>
-                </button>
               </div>
             </section>
 
@@ -715,13 +694,6 @@ const ProductDetails = () => {
                     {isWishlisted ? '♥ Wishlisted' : '♡ Wishlist'}
                   </button>
                   <button type="button" className={styles.ghostBtn} onClick={handleShare}>Share</button>
-                </div>
-
-                <div className={styles.trustRow}>
-                  <div className={styles.trustItem}>🔐 Secure Payment</div>
-                  <div className={styles.trustItem}>↩️ Easy 7-day Return</div>
-                  <div className={styles.trustItem}>💵 COD Available</div>
-                  <div className={styles.trustItem}>✅ Authentic Handicraft</div>
                 </div>
               </div>
             </section>
@@ -1056,7 +1028,7 @@ const ProductDetails = () => {
         <button type="button" className={styles.modal} onClick={() => setIsFullscreen(false)}>
           <div className={styles.modalContent}>
             <img 
-              src={images[selectedImage]} 
+              src={images[0]} 
               alt="Fullscreen preview" 
               loading="lazy"
               onError={(e) => {

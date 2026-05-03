@@ -101,10 +101,15 @@ class APIClient {
 
   async request(endpoint: string, options: RequestOptions = {}): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+    const headers: Record<string, string> = {};
+    
+    // Only set Content-Type if body is not FormData
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    // Merge with provided headers
+    Object.assign(headers, options.headers);
 
     const token = this.getToken();
     if (token) {
@@ -126,10 +131,13 @@ class APIClient {
           const newAccessToken = await this.refreshAccessToken();
           
           // Retry the original request with new token
-          const retryHeaders: Record<string, string> = {
-            'Content-Type': 'application/json',
-            ...options.headers,
-          };
+          const retryHeaders: Record<string, string> = {};
+          
+          if (!(options.body instanceof FormData)) {
+            retryHeaders['Content-Type'] = 'application/json';
+          }
+          
+          Object.assign(retryHeaders, options.headers);
 
           if (newAccessToken) {
             retryHeaders['Authorization'] = `Bearer ${newAccessToken}`;

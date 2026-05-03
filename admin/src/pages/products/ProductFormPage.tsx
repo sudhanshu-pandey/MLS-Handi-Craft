@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeftIcon, PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, PhotoIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
 import { productService } from '../../services/productService'
+import { uploadService } from '../../services/uploadService'
 import { MOCK_PRODUCTS } from '../../utils/mockData'
 import type { ProductFormData } from '../../types'
 
@@ -32,6 +33,8 @@ export default function ProductFormPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [tagInput, setTagInput] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!isEdit) return
@@ -97,6 +100,24 @@ export default function ProductFormPage() {
     if (!imageUrl.trim()) return
     setForm(f => ({ ...f, images: [...(f.images || []), imageUrl.trim()] }))
     setImageUrl('')
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files?.length) return
+    setIsUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        const url = await uploadService.uploadImage(file)
+        setForm(f => ({ ...f, images: [...(f.images || []), url] }))
+      }
+      toast.success(`${files.length} image(s) uploaded successfully`)
+    } catch (err: any) {
+      toast.error(err.message || 'Image upload failed')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   const removeImage = (idx: number) => {
@@ -201,6 +222,7 @@ export default function ProductFormPage() {
             {/* Images */}
             <div className="card p-5 space-y-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">Product Images</h3>
+              {/* URL input row */}
               <div className="flex gap-2">
                 <input
                   value={imageUrl}
@@ -212,6 +234,30 @@ export default function ProductFormPage() {
                 <button type="button" onClick={addImage} className="btn-primary flex-shrink-0">
                   <PlusIcon className="w-4 h-4" />
                 </button>
+              </div>
+              {/* File upload row */}
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="image-file-upload"
+                />
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn-secondary flex items-center gap-2 text-sm"
+                >
+                  <ArrowUpTrayIcon className="w-4 h-4" />
+                  {isUploading ? 'Uploading…' : 'Upload from Device'}
+                </button>
+                {isUploading && (
+                  <span className="text-xs text-gray-500 animate-pulse">Uploading to cloud…</span>
+                )}
               </div>
               {form.images?.length ? (
                 <div className="grid grid-cols-3 gap-3">
@@ -232,7 +278,7 @@ export default function ProductFormPage() {
               ) : (
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
                   <PhotoIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Add image URLs above</p>
+                  <p className="text-sm text-gray-500">Add image URLs above or upload from your device</p>
                 </div>
               )}
             </div>

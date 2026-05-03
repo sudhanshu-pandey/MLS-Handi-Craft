@@ -35,12 +35,12 @@ const Checkout = () => {
     }
   }, [allProducts.length, loadProducts])
 
-  // Load addresses on mount
+  // Load addresses when logged in
   useEffect(() => {
-    if (isLoggedIn && reduxAddresses.length === 0) {
+    if (isLoggedIn) {
       dispatch(fetchAddresses() as any)
     }
-  }, [isLoggedIn, reduxAddresses.length, dispatch])
+  }, [isLoggedIn, dispatch])
 
   const activeItems = useMemo(
     () => {
@@ -204,53 +204,59 @@ const Checkout = () => {
         <section className={styles.card} style={{ padding: 14 }}>
           <h3 style={{ marginBottom: 10 }}>Delivery address</h3>
 
-          {reduxAddresses.map((address: any) => (
-            <article className={styles.softCard} style={{ padding: 12, marginBottom: 10 }} key={address._id || address.id}>
-              <div className={styles.row}>
-                <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', flex: 1 }}>
-                  <input
-                    type="radio"
-                    name="selected-address"
-                    style={{ marginTop: 4 }}
-                    checked={selectedAddressId === (address._id || address.id)}
-                    onChange={() => {
-                      setSelectedAddressId(address._id || address.id)
-                      setShowAddForm(false)
-                      setEditingAddress(null)
-                    }}
-                  />
-                  <div>
-                    <strong style={{ color: 'var(--text-dark)' }}>{address.label}</strong>
-                    {address.isDefault && (
-                      <span style={{ marginLeft: 6, fontSize: 11, padding: '2px 6px', borderRadius: 999, background: 'color-mix(in srgb, var(--primary) 14%, var(--bg-white))', color: 'var(--primary)', fontWeight: 700 }}>Default</span>
-                    )}
-                    {address.name && <p style={{ margin: '2px 0', fontWeight: 600 }}>{address.name}</p>}
-                    {address.phone && <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-light)' }}>📞 {address.phone}</p>}
-                    <p style={{ margin: '2px 0' }}>{address.line1}{address.line2 ? `, ${address.line2}` : ''}</p>
-                    <p style={{ margin: '2px 0' }}>{address.city}, {address.state} – {address.pincode}</p>
-                    {address.landmark && <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-light)' }}>Landmark: {address.landmark}</p>}
+          {addressesLoading ? (
+            <p style={{ padding: '12px', textAlign: 'center', color: 'var(--text-light)' }}>Loading saved addresses...</p>
+          ) : reduxAddresses.length > 0 ? (
+            reduxAddresses.map((address: any) => (
+              <article className={styles.softCard} style={{ padding: 12, marginBottom: 10 }} key={address._id || address.id}>
+                <div className={styles.row}>
+                  <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', flex: 1 }}>
+                    <input
+                      type="radio"
+                      name="selected-address"
+                      style={{ marginTop: 4 }}
+                      checked={selectedAddressId === (address._id || address.id)}
+                      onChange={() => {
+                        setSelectedAddressId(address._id || address.id)
+                        setShowAddForm(false)
+                        setEditingAddress(null)
+                      }}
+                    />
+                    <div>
+                      <strong style={{ color: 'var(--text-dark)' }}>{address.label}</strong>
+                      {address.isDefault && (
+                        <span style={{ marginLeft: 6, fontSize: 11, padding: '2px 6px', borderRadius: 999, background: 'color-mix(in srgb, var(--primary) 14%, var(--bg-white))', color: 'var(--primary)', fontWeight: 700 }}>Default</span>
+                      )}
+                      {address.name && <p style={{ margin: '2px 0', fontWeight: 600 }}>{address.name}</p>}
+                      {address.phone && <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-light)' }}>📞 {address.phone}</p>}
+                      <p style={{ margin: '2px 0' }}>{address.line1}{address.line2 ? `, ${address.line2}` : ''}</p>
+                      <p style={{ margin: '2px 0' }}>{address.city}, {address.state} – {address.pincode}</p>
+                      {address.landmark && <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-light)' }}>Landmark: {address.landmark}</p>}
+                    </div>
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <button
+                      type="button"
+                      className={styles.ghostBtn}
+                      onClick={() => { setEditingAddress(address); setShowAddForm(true); setSelectedAddressId('') }}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      type="button" 
+                      className={styles.ghostBtn} 
+                      onClick={() => dispatch(deleteAddressAsync(address._id || address.id) as any)}
+                      disabled={addressesLoading}
+                    >
+                      Delete
+                    </button>
                   </div>
-                </label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <button
-                    type="button"
-                    className={styles.ghostBtn}
-                    onClick={() => { setEditingAddress(address); setShowAddForm(true); setSelectedAddressId('') }}
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    type="button" 
-                    className={styles.ghostBtn} 
-                    onClick={() => dispatch(deleteAddressAsync(address._id || address.id) as any)}
-                    disabled={addressesLoading}
-                  >
-                    Delete
-                  </button>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))
+          ) : (
+            <p style={{ padding: '12px', textAlign: 'center', color: 'var(--text-light)' }}>No saved addresses. Add one below.</p>
+          )}
 
           {!showAddForm && (
             <button

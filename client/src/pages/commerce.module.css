@@ -25,9 +25,37 @@
 
 .gallery {
   display: grid;
-  grid-template-columns: 84px 1fr;
-  gap: 12px;
   padding: 16px;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.gridImage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  background: var(--bg-white);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gridImage:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.gridImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .thumbs {
@@ -521,8 +549,13 @@
 }
 
 @media (max-width: 768px) {
+  .imageGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
   .gallery {
-    grid-template-columns: 1fr;
+    padding: 12px;
   }
 
   .thumbs {
@@ -874,6 +907,15 @@
 
 /* ── 480px: phones ──────────────────────────────────── */
 @media (max-width: 480px) {
+  .imageGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .gridImage {
+    aspect-ratio: 1 / 1;
+  }
+
   .mainImage {
     min-height: 220px;
   }

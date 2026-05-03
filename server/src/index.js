@@ -19,6 +19,7 @@ import couponRouter from "./routes/coupon.route.js";
 import addressRouter from "./routes/address.route.js";
 import pincodeRouter from "./routes/pincode.route.js";
 import analyticsRouter from "./routes/analytics.route.js";
+import uploadRouter from "./routes/upload.route.js";
 
 dotenv.config();
 
@@ -71,6 +72,7 @@ app.use("/api/coupons", couponRouter);
 app.use("/api/address", addressRouter);
 app.use("/api/pincode", pincodeRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api/upload", uploadRouter);
 
 // Server
 const PORT = process.env.PORT || 5000;
