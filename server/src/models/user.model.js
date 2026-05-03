@@ -34,16 +34,39 @@ const userSchema = new mongoose.Schema({
         default: false
     },
     otp: {
-        type: String
+        type: String // Now stores hashed OTP
     },
     otpExpires: {
+        type: Date
+    },
+    otpAttempts: {
+        type: Number,
+        default: 0
+    },
+    otpLockedUntil: {
+        type: Date
+    },
+    lastOTPSentAt: {
+        type: Date
+    },
+    lastVerifiedAt: {
         type: Date
     },
     refreshToken: {
         type: String
     },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
-    recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }]
+    recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+    isBlocked: {
+        type: Boolean,
+        default: false
+    },
+    blockedReason: {
+        type: String
+    },
+    blockedUntil: {
+        type: Date
+    }
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);

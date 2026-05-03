@@ -183,10 +183,10 @@ class APIClient {
     });
   }
 
-  verifyOTP(phone: string, otp: string) {
+  verifyOTP(sessionToken: string, otp: string) {
     const response = this.request('/auth/verify-otp', {
       method: 'POST',
-      body: JSON.stringify({ phone, otp }),
+      body: JSON.stringify({ sessionToken, otp }),
     });
     
     // Store both tokens after successful OTP verification

@@ -139,6 +139,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const result = await api.sendOTP(phone)
+      
+      // Store session token from server
+      if (result.sessionToken) {
+        localStorage.setItem('otpSessionToken', result.sessionToken)
+      }
+      
       return result
     } catch (err: any) {
       const message = err.message || 'Failed to send OTP'
@@ -153,10 +159,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true)
       setError(null)
-      const result = await api.verifyOTP(phone, otp)
+      
+      // Retrieve session token from storage
+      const sessionToken = localStorage.getItem('otpSessionToken')
+      if (!sessionToken) {
+        throw new Error('Session expired. Please request OTP again.')
+      }
+      
+      const result = await api.verifyOTP(sessionToken, otp)
       
       if (result.accessToken) {
         api.setToken(result.accessToken)
+        
+        // Clear session token after successful verification
+        localStorage.removeItem('otpSessionToken')
         
         // Fetch actual user profile from database
         try {

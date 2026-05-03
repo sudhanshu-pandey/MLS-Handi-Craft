@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import { scheduleCleanupJob } from "./jobs/cleanupExpiredOrders.js";
+import startOTPCleanupTasks from "./utils/otpCleanupTasks.js";
 
 import authRouter from "./routes/auth.route.js";
 import adminAuthRouter from "./routes/admin-auth.route.js";
@@ -20,6 +21,7 @@ import addressRouter from "./routes/address.route.js";
 import pincodeRouter from "./routes/pincode.route.js";
 import analyticsRouter from "./routes/analytics.route.js";
 import uploadRouter from "./routes/upload.route.js";
+import otpMonitoringRouter from "./routes/otp-monitoring.route.js";
 
 dotenv.config();
 
@@ -73,6 +75,7 @@ app.use("/api/address", addressRouter);
 app.use("/api/pincode", pincodeRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/upload", uploadRouter);
+app.use("/api/otp-monitoring", otpMonitoringRouter);
 
 // Server
 const PORT = process.env.PORT || 5000;
@@ -82,4 +85,7 @@ app.listen(PORT, () => {
   // Schedule cleanup job to run every 2 minutes
   // This will automatically delete expired orders
   scheduleCleanupJob();
+  
+  // Start OTP security cleanup tasks
+  startOTPCleanupTasks();
 });
