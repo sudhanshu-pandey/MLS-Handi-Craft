@@ -9,11 +9,11 @@ import './OrderTracking.css'
 const statusSteps = ['ordered', 'packed', 'shipped', 'out_for_delivery', 'delivered'] as const
 
 const stepMeta: Record<(typeof statusSteps)[number], { label: string; icon: string; desc: string }> = {
-  ordered:          { label: 'Order placed',     icon: '📦', desc: 'We have received your order.' },
-  packed:           { label: 'Packed',            icon: '🏷️', desc: 'Your order has been packed.' },
-  shipped:          { label: 'Shipped',           icon: '🚚', desc: 'Your order is on the way.' },
-  out_for_delivery: { label: 'Out for delivery',  icon: '🏃', desc: 'Arriving today — stay home!' },
-  delivered:        { label: 'Delivered',         icon: '✅', desc: 'Package delivered.' },
+  ordered:          { label: 'order placed',     icon: '📦', desc: 'We have received your order.' },
+  packed:           { label: 'packed',            icon: '🏷️', desc: 'Your order has been packed.' },
+  shipped:          { label: 'shipped',           icon: '🚚', desc: 'Your order is on the way.' },
+  out_for_delivery: { label: 'out for delivery',  icon: '🏃', desc: 'Arriving today — stay home!' },
+  delivered:        { label: 'delivered',         icon: '✅', desc: 'Package delivered.' },
 }
 
 interface OrderItem {

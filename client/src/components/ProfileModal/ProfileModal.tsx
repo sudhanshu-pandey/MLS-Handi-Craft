@@ -954,6 +954,12 @@ const OrdersTab = () => {
   const orders = useAppSelector((state) => state.orders.orders)
   const loading = useAppSelector((state) => state.orders.loading)
   const error = useAppSelector((state) => state.orders.error)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
 
   // Filter only orders with successful payment
   const successfulOrders = orders.filter((order: any) => order.paymentStatus === 'success')
@@ -992,59 +998,327 @@ const OrdersTab = () => {
     navigate(`/order-tracking/${orderId}`)
   }
 
+  const handleAddReview = (e: React.MouseEvent, order: any) => {
+    e.stopPropagation()
+    setSelectedOrder(order)
+    // Select the first product by default
+    if (order.items && order.items.length > 0) {
+      setSelectedProduct(order.items[0])
+    }
+    setShowReviewModal(true)
+  }
+
+  const handleSubmitReview = async () => {
+    if (!reviewComment.trim()) {
+      alert('Please write a review')
+      return
+    }
+
+    if (!selectedProduct) {
+      alert('Please select a product')
+      return
+    }
+
+    try {
+      setReviewSubmitting(true)
+      const productId = selectedProduct.product?._id || selectedProduct.productId
+      
+      // Debug: log the order status
+      console.log('Submitting review for order:', {
+        orderId: selectedOrder._id,
+        status: selectedOrder.status,
+        productId: productId,
+        rating: reviewRating
+      })
+      
+      await api.request('/reviews', {
+        method: 'POST',
+        body: JSON.stringify({
+          orderId: selectedOrder._id,
+          productId: productId,
+          rating: reviewRating,
+          comment: reviewComment
+        })
+      })
+      
+      // Reset and close
+      setReviewComment('')
+      setReviewRating(5)
+      setShowReviewModal(false)
+      setSelectedOrder(null)
+      setSelectedProduct(null)
+      alert('✅ Review submitted successfully!')
+    } catch (err: any) {
+      alert('Failed to submit review: ' + (err.message || 'Unknown error'))
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }
+
   return (
-    <div className={styles.section}>
-      <h3 className={styles.sectionTitle}>Recent Orders</h3>
-      <div className={styles.orderList}>
-        {successfulOrders.map((order: any) => (
-          <div 
-            key={order._id} 
-            className={styles.orderCard}
-            onClick={() => handleOrderClick(order._id)}
-            style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
-              e.currentTarget.style.transform = 'translateY(-2px)'
+    <>
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>Recent Orders</h3>
+        <div className={styles.orderList}>
+          {successfulOrders.map((order: any) => (
+            <div 
+              key={order._id} 
+              className={styles.orderCard}
+              onClick={() => handleOrderClick(order._id)}
+              style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = ''
+                e.currentTarget.style.transform = ''
+              }}
+            >
+              <div className={styles.orderTop}>
+                <span className={styles.orderId}>{order._id.slice(-8).toUpperCase()}</span>
+                <span className={`${styles.orderStatus} ${styles[`status_${getStatusColor(order.status)}`]}`}>
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ')}
+                </span>
+              </div>
+              
+              {/* Display all product names in the order */}
+              <div className={styles.orderItems}>
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item: any, idx: number) => {
+                    return (
+                      <p key={idx} className={styles.orderItem}>
+                        {item.product?.name || item.productName || 'Product'} {item.quantity > 1 ? `(x${item.quantity})` : ''}
+                      </p>
+                    )
+                  })
+                ) : (
+                  <p className={styles.orderItem}>No items</p>
+                )}
+              </div>
+              
+              <div className={styles.orderMeta}>
+                <span className={styles.orderDate}>📅 {formatDate(order.createdAt)}</span>
+                <span className={styles.orderAmount}>{formatCurrency(order.total)}</span>
+              </div>
+              <div className={styles.orderActions} onClick={(e) => e.stopPropagation()}>
+                <button type="button" className={styles.addrBtn} onClick={() => handleOrderClick(order._id)}>Track</button>
+                <button type="button" className={styles.addrBtn}>Invoice</button>
+                {order.status === 'delivered' && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleAddReview(e, order)}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#a16149',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#8b4a3a'
+                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(161, 97, 73, 0.3)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#a16149'
+                      e.currentTarget.style.boxShadow = ''
+                    }}
+                  >
+                    ⭐ Add Review
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Review Modal */}
+      {showReviewModal && selectedOrder && selectedProduct && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}
+          onClick={() => !reviewSubmitting && setShowReviewModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = ''
-              e.currentTarget.style.transform = ''
-            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.orderTop}>
-              <span className={styles.orderId}>{order._id.slice(-8).toUpperCase()}</span>
-              <span className={`${styles.orderStatus} ${styles[`status_${getStatusColor(order.status)}`]}`}>
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ')}
-              </span>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '700', color: '#333' }}>
+              ⭐ Add Review
+            </h2>
+            <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#666' }}>
+              Order: {selectedOrder._id.slice(-8).toUpperCase()}
+            </p>
+            <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#999' }}>
+              Product: {selectedProduct.product?.name || selectedProduct.productName || 'Product'}
+            </p>
+
+            {/* Product Selector (for orders with multiple items) */}
+            {selectedOrder.items && selectedOrder.items.length > 1 && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: '#333' }}>
+                  Select Product
+                </label>
+                <select
+                  value={selectedProduct.product?._id || selectedProduct.productId || ''}
+                  onChange={(e) => {
+                    const product = selectedOrder.items.find((item: any) => 
+                      (item.product?._id === e.target.value) || (item.productId === e.target.value)
+                    )
+                    if (product) setSelectedProduct(product)
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontFamily: 'inherit',
+                    fontSize: '13px',
+                    color: '#333',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {selectedOrder.items.map((item: any, idx: number) => (
+                    <option key={idx} value={item.product?._id || item.productId}>
+                      {item.product?.name || item.productName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Rating */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: '#333' }}>
+                Rating
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setReviewRating(star)}
+                    style={{
+                      fontSize: '28px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      cursor: 'pointer',
+                      opacity: star <= reviewRating ? 1 : 0.3,
+                      transition: 'all 0.2s ease',
+                      transform: star <= reviewRating ? 'scale(1)' : 'scale(0.8)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.2)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = star <= reviewRating ? 'scale(1)' : 'scale(0.8)'
+                    }}
+                  >
+                    ⭐
+                  </button>
+                ))}
+              </div>
             </div>
-            
-            {/* Display all product names in the order */}
-            <div className={styles.orderItems}>
-              {order.items && order.items.length > 0 ? (
-                order.items.map((item: any, idx: number) => {
-                  return (
-                    <p key={idx} className={styles.orderItem}>
-                      {item.product?.name || item.productName || 'Product'} {item.quantity > 1 ? `(x${item.quantity})` : ''}
-                    </p>
-                  )
-                })
-              ) : (
-                <p className={styles.orderItem}>No items</p>
-              )}
+
+            {/* Comment */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: '#333' }}>
+                Your Review
+              </label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Share your experience..."
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontFamily: 'inherit',
+                  fontSize: '13px',
+                  resize: 'vertical',
+                  minHeight: '80px',
+                  boxSizing: 'border-box',
+                  color: '#333'
+                }}
+                disabled={reviewSubmitting}
+              />
             </div>
-            
-            <div className={styles.orderMeta}>
-              <span className={styles.orderDate}>📅 {formatDate(order.createdAt)}</span>
-              <span className={styles.orderAmount}>{formatCurrency(order.total)}</span>
-            </div>
-            <div className={styles.orderActions} onClick={(e) => e.stopPropagation()}>
-              <button type="button" className={styles.addrBtn} onClick={() => handleOrderClick(order._id)}>Track</button>
-              <button type="button" className={styles.addrBtn}>Invoice</button>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowReviewModal(false)}
+                disabled={reviewSubmitting}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  backgroundColor: '#f0f0f0',
+                  color: '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  cursor: reviewSubmitting ? 'not-allowed' : 'pointer',
+                  fontSize: '13px',
+                  opacity: reviewSubmitting ? 0.6 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                disabled={reviewSubmitting || !reviewComment.trim()}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  backgroundColor: reviewComment.trim() && !reviewSubmitting ? '#a16149' : '#ccc',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  cursor: reviewComment.trim() && !reviewSubmitting ? 'pointer' : 'not-allowed',
+                  fontSize: '13px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (reviewComment.trim() && !reviewSubmitting) {
+                    e.currentTarget.style.backgroundColor = '#8b4a3a'
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(161, 97, 73, 0.3)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = reviewComment.trim() && !reviewSubmitting ? '#a16149' : '#ccc'
+                  e.currentTarget.style.boxShadow = ''
+                }}
+              >
+                {reviewSubmitting ? '⏳ Submitting...' : '✓ Submit'}
+              </button>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   )
 }
 

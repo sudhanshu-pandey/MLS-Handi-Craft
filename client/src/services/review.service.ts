@@ -22,7 +22,7 @@ export const reviewService = {
   // Get all reviews for a specific product
   async getProductReviews(productId: string, sort: 'latest' | 'highest' = 'latest') {
     try {
-      const response = await fetch(`${baseURL}/reviews/${productId}?sort=${sort}`);
+      const response = await fetch(`${baseURL}/reviews/product/${productId}?sort=${sort}`);
       if (!response.ok) {
         throw new Error('Failed to fetch reviews');
       }
