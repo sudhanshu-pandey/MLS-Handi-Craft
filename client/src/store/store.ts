@@ -6,13 +6,15 @@ import addressReducer from './slices/addressSlice';
 import orderReducer from './slices/orderSlice';
 import filterReducer from './slices/filterSlice';
 import couponReducer from './slices/couponSlice';
-import { cartPersistenceMiddleware } from './middleware/cartPersistence';
 import { filterPersistenceMiddleware } from './middleware/filterPersistence';
 import { couponPersistenceMiddleware } from './middleware/couponPersistence';
 
 /**
  * Redux Store Configuration
  * Combines all reducers, middleware, and configures the store
+ * 
+ * NOTE: Cart persistence middleware is DISABLED
+ * All cart operations now go through database API only
  */
 const store = configureStore({
   reducer: {
@@ -26,7 +28,8 @@ const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
-      cartPersistenceMiddleware as any,
+      // cartPersistenceMiddleware is DISABLED - use database only
+      // cartPersistenceMiddleware as any,
       filterPersistenceMiddleware as any,
       couponPersistenceMiddleware as any
     ),

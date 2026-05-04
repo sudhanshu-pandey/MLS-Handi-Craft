@@ -1,6 +1,8 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react'
 import api from '../services/api'
 import { clearLocalCart } from '../utils/cartStorage'
+import { useAppDispatch } from '../store/hooks'
+import { syncCart } from '../store/slices/cartSlice'
 
 export type Address = {
   id?: string
@@ -55,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const dispatch = useAppDispatch()
 
   // Restore auth state from localStorage on mount
   useEffect(() => {
@@ -93,7 +96,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
           
+          // Also fetch cart from database on mount (when restoring logged-in state)
+          const fetchCart = async () => {
+            try {
+              const cartResponse = await api.getCart()
+              if (cartResponse.cart && cartResponse.cart.length > 0) {
+                console.log('✅ Cart fetched from database on app mount:', cartResponse.cart)
+                dispatch(syncCart(cartResponse.cart))
+                console.log('✅ Cart synced to Redux store on app mount')
+              } else {
+                // No items in database cart, clear Redux too
+                dispatch(syncCart([]))
+                console.log('✅ Database cart is empty on app mount, Redux cleared')
+              }
+            } catch (cartErr) {
+              console.warn('⚠️ Failed to fetch cart from database on app mount:', cartErr)
+              // Clear and continue - user can add items again
+              dispatch(syncCart([]))
+            }
+          }
+          
           refreshProfile()
+          fetchCart()
         }
       }
     } catch (err) {
@@ -208,8 +232,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         setIsLoggedIn(true)
         
-        // Dispatch cart sync event so Redux can sync cart to database
-        window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: { phone } }))
+        // CLEAR LOCAL STORAGE CART and FETCH FROM DATABASE
+        try {
+          // Clear local storage cart data
+          localStorage.removeItem('cart')
+          localStorage.removeItem('cartTotal')
+          
+          // Fetch cart from database
+          const cartResponse = await api.getCart()
+          if (cartResponse.cart && cartResponse.cart.length > 0) {
+            console.log('✅ Cart fetched from database:', cartResponse.cart)
+            // Server returns already-formatted cart items, just sync directly
+            dispatch(syncCart(cartResponse.cart))
+            console.log('✅ Cart synced to Redux store')
+          } else {
+            // No items in database cart, clear Redux too
+            dispatch(syncCart([]))
+            console.log('✅ Database cart is empty, Redux cleared')
+          }
+        } catch (cartErr) {
+          console.warn('⚠️ Failed to fetch cart from database:', cartErr)
+          // Clear local data and continue - user can add items again
+          localStorage.removeItem('cart')
+          localStorage.removeItem('cartTotal')
+          dispatch(syncCart([]))
+        }
       }
       
       return result

@@ -95,6 +95,24 @@ const Payment = () => {
       dispatch(clearCart());
       dispatch(clearCoupon());
       
+      // Remove items from database cart
+      if (order.items && order.items.length > 0) {
+        try {
+          // Remove each item from database cart
+          for (const item of order.items) {
+            try {
+              await api.removeFromCart(item.product?._id || item.product?.id);
+            } catch (err) {
+              console.warn(`Failed to remove item ${item.product?._id || item.product?.id} from cart:`, err);
+              // Continue removing other items even if one fails
+            }
+          }
+          console.log('✓ All items removed from database cart');
+        } catch (err) {
+          console.error('Error removing items from cart:', err);
+        }
+      }
+      
       // Deduct product quantities from database
       if (order.items && order.items.length > 0) {
         const items = order.items.map((item: any) => ({

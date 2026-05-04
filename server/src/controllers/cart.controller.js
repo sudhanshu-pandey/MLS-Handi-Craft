@@ -3,9 +3,57 @@ import Product from "../models/product.model.js";
 import CartItem from "../models/cartitem.model.js";
 import { HTTP_STATUS } from "../config/constants.js";
 
+/**
+ * Helper function to find product by ID
+ * Works with MongoDB ObjectId
+ */
+const findProductById = async (productId) => {
+  try {
+    // MongoDB ObjectId lookup
+    const product = await Product.findById(productId);
+    if (product) {
+      console.log(`✅ [findProductById] Found product: ${product.name}`);
+      return product;
+    }
+    
+    console.warn(`⚠️ [findProductById] Product not found for ID: ${productId}`);
+    return null;
+  } catch (err) {
+    console.error(`❌ [findProductById] Error:`, err.message);
+    return null;
+  }
+};
+
+/**
+ * Transform CartItem from DB format to Client format
+ * Converts MongoDB documents to simple objects the client expects
+ */
+const formatCartItem = (cartItem) => {
+  return {
+    productId: cartItem.productId?.toString() || cartItem.productId,
+    quantity: cartItem.quantity,
+    productName: cartItem.product?.name || '',
+    productPrice: cartItem.product?.price || 0,
+    productImage: cartItem.product?.image || '',
+  };
+};
+
+/**
+ * Transform array of CartItems to client format
+ */
+const formatCartItems = (cartItems) => {
+  return cartItems.map(item => formatCartItem(item));
+};
+
 // Add product to cart
 const addToCart = async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      console.warn('❌ [addToCart] User not authenticated');
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'User not authenticated' });
+    }
+
     const userId = req.user.id;
     const { productId, quantity } = req.body;
 
@@ -13,11 +61,14 @@ const addToCart = async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Product ID and quantity are required.' });
     }
 
-    // Find product by numeric ID
-    const product = await Product.findOne({ id: productId });
+    // Find product using helper function
+    const product = await findProductById(productId);
     if (!product) {
+      console.warn(`❌ [addToCart] Product not found: ${productId}`);
       return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Product not found.' });
     }
+
+    console.log(`✅ [addToCart] User: ${userId}, Product: ${productId}, Quantity: ${quantity}`);
 
     // Check if item already exists in cart
     let cartItem = await CartItem.findOne({
@@ -28,11 +79,14 @@ const addToCart = async (req, res) => {
 
     if (cartItem) {
       // Update existing item
+      console.log(`📝 [addToCart] Updating existing cart item, old qty: ${cartItem.quantity}`);
       cartItem.quantity += quantity;
       cartItem.updatedAt = new Date();
       await cartItem.save();
+      console.log(`✅ [addToCart] Cart item updated, new qty: ${cartItem.quantity}`);
     } else {
       // Create new cart item
+      console.log(`➕ [addToCart] Creating new cart item`);
       cartItem = new CartItem({
         userId,
         productId,
@@ -41,13 +95,27 @@ const addToCart = async (req, res) => {
         savedForLater: false
       });
       await cartItem.save();
+      console.log(`✅ [addToCart] New cart item created`);
     }
+
+    // Return full cart (like updateCartQuantity does) to keep client in sync
+    const cartItems = await CartItem.find({ userId }).populate('product');
+    const activeCart = cartItems.filter(item => !item.savedForLater);
+    const savedItems = cartItems.filter(item => item.savedForLater);
+
+    // Format cart items for client
+    const formattedCart = formatCartItems(activeCart);
+    const formattedSavedItems = formatCartItems(savedItems);
 
     res.status(HTTP_STATUS.CREATED).json({ 
       message: 'Product added to cart.',
-      cartItem 
+      cart: formattedCart,
+      savedItems: formattedSavedItems,
+      itemCount: activeCart.length,
+      savedCount: savedItems.length
     });
   } catch (err) {
+    console.error('❌ [addToCart] Error:', err);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error', error: err.message });
   }
 };
@@ -74,9 +142,13 @@ const getCart = async (req, res) => {
     const savedItems = cartItems.filter(item => item.savedForLater);
     const total = activeCart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
+    // Format cart items for client
+    const formattedCart = formatCartItems(activeCart);
+    const formattedSavedItems = formatCartItems(savedItems);
+
     res.json({ 
-      cart: activeCart, 
-      savedItems, 
+      cart: formattedCart, 
+      savedItems: formattedSavedItems, 
       total, 
       itemCount: activeCart.length,
       savedCount: savedItems.length
@@ -115,10 +187,14 @@ const updateCartQuantity = async (req, res) => {
     const activeCart = cartItems.filter(item => !item.savedForLater);
     const savedItems = cartItems.filter(item => item.savedForLater);
 
+    // Format cart items for client
+    const formattedCart = formatCartItems(activeCart);
+    const formattedSavedItems = formatCartItems(savedItems);
+
     res.json({ 
       message: 'Cart updated.',
-      cart: activeCart,
-      savedItems,
+      cart: formattedCart,
+      savedItems: formattedSavedItems,
       itemCount: activeCart.length,
       savedCount: savedItems.length
     });
@@ -151,10 +227,14 @@ const toggleSaveForLater = async (req, res) => {
     const activeCart = cartItems.filter(item => !item.savedForLater);
     const savedItems = cartItems.filter(item => item.savedForLater);
 
+    // Format cart items for client
+    const formattedCart = formatCartItems(activeCart);
+    const formattedSavedItems = formatCartItems(savedItems);
+
     res.json({ 
       message: 'Cart item updated.',
-      cart: activeCart,
-      savedItems,
+      cart: formattedCart,
+      savedItems: formattedSavedItems,
       itemCount: activeCart.length,
       savedCount: savedItems.length
     });
@@ -181,10 +261,14 @@ const removeFromCart = async (req, res) => {
     const activeCart = cartItems.filter(item => !item.savedForLater);
     const savedItems = cartItems.filter(item => item.savedForLater);
 
+    // Format cart items for client
+    const formattedCart = formatCartItems(activeCart);
+    const formattedSavedItems = formatCartItems(savedItems);
+
     res.json({ 
       message: 'Product removed from cart.',
-      cart: activeCart,
-      savedItems,
+      cart: formattedCart,
+      savedItems: formattedSavedItems,
       itemCount: activeCart.length,
       savedCount: savedItems.length
     });
@@ -230,8 +314,8 @@ const syncCart = async (req, res) => {
         continue; // Skip invalid items
       }
 
-      // Find product by numeric ID
-      const product = await Product.findOne({ id: productId });
+      // Find product using helper function
+      const product = await findProductById(productId);
       if (!product) {
         continue; // Skip if product doesn't exist
       }

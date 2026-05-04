@@ -7,6 +7,7 @@ import { addItem as addToWishlist, removeItem as removeFromWishlist } from '../s
 import useProducts from '../hooks/useProducts'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import api from '../services/api'
 import LoginModal from '../components/LoginModal/LoginModal'
 import { formatCurrency, sumCartValue, sumOriginalCartValue, getStockCount } from '../utils/commerce'
 import { verifyCoupon } from '../api/coupon.api'
@@ -149,6 +150,29 @@ const Cart = () => {
     }
   }
 
+  // Handle remove from cart - syncs with database for logged-in users
+  const handleRemoveFromCart = async (productId: string | number) => {
+    try {
+      // Remove from Redux immediately for UI feedback
+      dispatch(removeItem(productId))
+      showToast('✅ Item removed from cart', 'success')
+      
+      // If user is logged in, remove from database too
+      if (isLoggedIn) {
+        try {
+          await api.removeFromCart(productId)
+          console.log('✅ Item removed from database')
+        } catch (error: any) {
+          console.error('❌ Failed to remove from database:', error)
+          showToast('⚠️ Item removed locally but sync failed', 'error')
+        }
+      }
+    } catch (error: any) {
+      console.error('Error removing item:', error)
+      showToast('❌ Failed to remove item', 'error')
+    }
+  }
+
   const handleCheckout = () => {
     if (!isLoggedIn) {
       setIsLoginOpen(true)
@@ -199,12 +223,28 @@ const Cart = () => {
                         <button 
                           type="button" 
                           className={styles.qtyBtn} 
-                          onClick={() => {
+                          onClick={async () => {
                             const newQty = quantity - 1;
-                            if (newQty <= 0) {
-                              dispatch(removeItem(productId));
+                            if (isLoggedIn) {
+                              try {
+                                if (newQty <= 0) {
+                                  // Remove from database
+                                  await api.removeFromCart(productId);
+                                  dispatch(removeItem(productId));
+                                } else {
+                                  // Update quantity in database
+                                  await api.updateCartQuantity(productId, newQty);
+                                  dispatch(updateQuantity({ productId, quantity: newQty }));
+                                }
+                              } catch (error) {
+                                showToast('❌ Failed to update cart', 'error');
+                              }
                             } else {
-                              dispatch(updateQuantity({ productId, quantity: newQty }));
+                              if (newQty <= 0) {
+                                dispatch(removeItem(productId));
+                              } else {
+                                dispatch(updateQuantity({ productId, quantity: newQty }));
+                              }
                             }
                           }}
                         >
@@ -214,7 +254,7 @@ const Cart = () => {
                         <button 
                           type="button" 
                           className={styles.qtyBtn} 
-                          onClick={() => {
+                          onClick={async () => {
                             // Check stock before incrementing
                             const stockCount = product.stock !== undefined ? product.stock : getStockCount(productId);
                             const newQty = quantity + 1;
@@ -224,7 +264,16 @@ const Cart = () => {
                               return;
                             }
                             
-                            dispatch(updateQuantity({ productId, quantity: newQty }));
+                            if (isLoggedIn) {
+                              try {
+                                await api.updateCartQuantity(productId, newQty);
+                                dispatch(updateQuantity({ productId, quantity: newQty }));
+                              } catch (error) {
+                                showToast('❌ Failed to update cart', 'error');
+                              }
+                            } else {
+                              dispatch(updateQuantity({ productId, quantity: newQty }));
+                            }
                           }}
                         >
                           +
@@ -236,10 +285,11 @@ const Cart = () => {
                   {/* Action buttons on the right for desktop */}
                   <div className="actionButtonsContainer">
                     <button type="button" className={`${styles.ghostBtn} actionButton`} onClick={() => {
-                      dispatch(addToWishlist(productId));
-                      dispatch(removeItem(productId));
+                      // Pass quantity to wishlist so it can be restored later
+                      dispatch(addToWishlist({ productId, quantity, productName: product.name, productPrice: product.price, productImage: product.image }));
+                      handleRemoveFromCart(productId);
                     }}>❤️ Add to wishlist</button>
-                    <button type="button" className={`${styles.ghostBtn} actionButton`} onClick={() => dispatch(removeItem(productId))}>Remove</button>
+                    <button type="button" className={`${styles.ghostBtn} actionButton`} onClick={() => handleRemoveFromCart(productId)}>Remove</button>
                   </div>
                 </div>
               </article>
@@ -271,7 +321,7 @@ const Cart = () => {
                         </div>
                       </div>
                       <div className="actionButtonsContainer">
-                        <button type="button" className={`${styles.secondaryBtn} actionButton`} onClick={() => {
+                        <button type="button" className={`${styles.secondaryBtn} actionButton`} onClick={async () => {
                           // Check stock before adding to cart
                           const stockCount = product.stock !== undefined ? product.stock : getStockCount(productId);
                           
@@ -280,15 +330,38 @@ const Cart = () => {
                             return;
                           }
                           
-                          dispatch(addItemToCart({ 
-                            productId, 
-                            quantity: 1,
-                            productName: product.name,
-                            productPrice: product.price,
-                            productImage: product.image
-                          }));
-                          dispatch(removeFromWishlist(productId));
-                          showToast('✓ Added to cart');
+                          // Use stored quantity from wishlist, or 1 if not available
+                          const wishlistItem = wishlistItems.find((item: any) => item.productId === productId);
+                          const quantityToAdd = wishlistItem?.quantity || 1;
+                          
+                          if (isLoggedIn) {
+                            try {
+                              // Add to database with the original quantity
+                              await api.addToCart(productId, quantityToAdd);
+                              dispatch(addItemToCart({ 
+                                productId, 
+                                quantity: quantityToAdd,
+                                productName: product.name,
+                                productPrice: product.price,
+                                productImage: product.image
+                              }));
+                              dispatch(removeFromWishlist(productId));
+                              showToast(`✓ Added ${quantityToAdd} item(s) to cart`);
+                            } catch (error) {
+                              showToast('❌ Failed to add to cart', 'error');
+                            }
+                          } else {
+                            // Guest user - just add to Redux
+                            dispatch(addItemToCart({ 
+                              productId, 
+                              quantity: quantityToAdd,
+                              productName: product.name,
+                              productPrice: product.price,
+                              productImage: product.image
+                            }));
+                            dispatch(removeFromWishlist(productId));
+                            showToast(`✓ Added ${quantityToAdd} item(s) to cart`);
+                          }
                         }}>
                           Add to cart
                         </button>

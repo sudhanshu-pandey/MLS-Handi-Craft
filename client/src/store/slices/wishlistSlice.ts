@@ -2,7 +2,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface WishlistItem {
   productId: number | string;
-  addedAt: string;
+  quantity?: number;
+  productName?: string;
+  productPrice?: number;
+  productImage?: string;
+  addedAt?: string;
 }
 
 export interface WishlistState {
@@ -31,15 +35,28 @@ const wishlistSlice = createSlice({
     },
 
     // Add item to wishlist (save for later)
-    addItem: (state, action: PayloadAction<number | string>) => {
-      const productId = action.payload;
-      const existingItem = state.items.find((item) => item.productId === productId);
+    addItem: (state, action: PayloadAction<number | string | WishlistItem>) => {
+      // Handle both simple productId and full WishlistItem object
+      let item: WishlistItem;
+      
+      if (typeof action.payload === 'number' || typeof action.payload === 'string') {
+        // Simple productId
+        item = {
+          productId: action.payload,
+          addedAt: new Date().toISOString(),
+        };
+      } else {
+        // Full WishlistItem object
+        item = {
+          ...action.payload,
+          addedAt: action.payload.addedAt || new Date().toISOString(),
+        };
+      }
+      
+      const existingItem = state.items.find((i) => i.productId === item.productId);
 
       if (!existingItem) {
-        state.items.push({
-          productId,
-          addedAt: new Date().toISOString(),
-        });
+        state.items.push(item);
         state.itemCount = state.items.length;
       }
     },

@@ -1,9 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { addItem, updateQuantity, removeItem } from '../../store/slices/cartSlice';
+import { addItem, updateQuantity, removeItem, syncCart } from '../../store/slices/cartSlice';
 import type { CartItem } from '../../store/slices/cartSlice';
 import { getStockCount } from '../../utils/commerce';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import styles from './QuantityControl.module.css';
 
 interface QuantityControlProps {
@@ -35,6 +37,7 @@ export const QuantityControl: React.FC<QuantityControlProps> = ({
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const { showToast } = useToast();
+  const { isLoggedIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -51,6 +54,12 @@ export const QuantityControl: React.FC<QuantityControlProps> = ({
   const handleAddToCart = useCallback(() => {
     if (isLoading) return;
     
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      showToast('❌ Please login to add items to cart', 'error');
+      return;
+    }
+    
     // Check if stock is available
     if (stockCount <= 0) {
       showToast('❌ Out of stock', 'error');
@@ -58,61 +67,140 @@ export const QuantityControl: React.FC<QuantityControlProps> = ({
     }
     
     setIsLoading(true);
-    try {
-      dispatch(addItem({ 
-        productId, 
-        quantity: 1,
-        productName,
-        productPrice,
-        productImage
-      }));
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-      onQuantityChange?.(1);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [productId, stockCount, dispatch, onQuantityChange, showToast, productName, productPrice, productImage]);
+    
+    // Save to database (user must be logged in)
+    api.addToCart(productId, 1)
+      .then((response) => {
+        // Sync full cart from server response to keep Redux state consistent
+        if (response && response.cart) {
+          dispatch(syncCart(response.cart));
+        } else {
+          // Fallback to addItem if response doesn't have full cart
+          dispatch(addItem({ 
+            productId, 
+            quantity: 1,
+            productName,
+            productPrice,
+            productImage
+          }));
+        }
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+        onQuantityChange?.(1);
+        showToast('✅ Added to cart', 'success');
+      })
+      .catch((error) => {
+        showToast(`❌ ${error.message || 'Failed to add to cart'}`, 'error');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [isLoading, productId, stockCount, dispatch, onQuantityChange, showToast, isLoggedIn, productName, productPrice, productImage]);
 
   // Increment quantity
   const handleIncrement = useCallback(() => {
     if (isLoading) return;
 
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      showToast('❌ Please login to modify cart', 'error');
+      return;
+    }
+
+    // Get fresh cart item from Redux store (not from closure)
+    const freshCartItem = cartItems.find((item: CartItem) => item.productId === productId);
+    const freshCurrentQuantity = freshCartItem?.quantity || initialQuantity;
+
     // Check if adding one more would exceed stock
-    if (currentQuantity + 1 > stockCount) {
+    if (freshCurrentQuantity + 1 > stockCount) {
       showToast(`❌ Only ${stockCount} in stock`, 'error');
       return;
     }
 
-    const newQuantity = currentQuantity + 1;
+    const newQuantity = freshCurrentQuantity + 1;
     setIsLoading(true);
     
-    try {
-      dispatch(updateQuantity({ productId, quantity: newQuantity }));
-      onQuantityChange?.(newQuantity);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [productId, currentQuantity, stockCount, dispatch, onQuantityChange, showToast]);
+    // Sync with database
+    api.updateCartQuantity(productId, newQuantity)
+      .then((response) => {
+        // Sync full cart from server response to keep Redux state consistent
+        if (response && response.cart) {
+          dispatch(syncCart(response.cart));
+        } else {
+          // Fallback to updateQuantity if response doesn't have full cart
+          dispatch(updateQuantity({ productId, quantity: newQuantity }));
+        }
+        onQuantityChange?.(newQuantity);
+        showToast('✅ Quantity updated', 'success');
+      })
+      .catch((error) => {
+        showToast(`❌ ${error.message || 'Failed to update cart'}`, 'error');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [isLoading, productId, cartItems, stockCount, dispatch, onQuantityChange, showToast, isLoggedIn, initialQuantity]);
 
   // Decrement quantity
   const handleDecrement = useCallback(() => {
     if (isLoading) return;
 
-    const newQuantity = currentQuantity - 1;
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      showToast('❌ Please login to modify cart', 'error');
+      return;
+    }
+
+    // Get fresh cart item from Redux store (not from closure)
+    const freshCartItem = cartItems.find((item: CartItem) => item.productId === productId);
+    const freshCurrentQuantity = freshCartItem?.quantity || initialQuantity;
+
+    const newQuantity = freshCurrentQuantity - 1;
     setIsLoading(true);
 
-    try {
-      if (newQuantity <= 0) {
-        dispatch(removeItem(productId));
-      } else {
-        dispatch(updateQuantity({ productId, quantity: newQuantity }));
-      }
-      onQuantityChange?.(newQuantity);
-    } finally {
-      setIsLoading(false);
+    // Sync with database
+    if (newQuantity <= 0) {
+      // Remove from cart when quantity reaches 0
+      api.removeFromCart(productId)
+        .then((response) => {
+          // Sync full cart from server response to keep Redux state consistent
+          if (response && response.cart) {
+            dispatch(syncCart(response.cart));
+          } else {
+            // Fallback to removeItem if response doesn't have full cart
+            dispatch(removeItem(productId));
+          }
+          showToast('✅ Item removed from cart', 'success');
+          onQuantityChange?.(0);
+        })
+        .catch((error) => {
+          showToast(`❌ ${error.message || 'Failed to remove item'}`, 'error');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      // Update quantity in database
+      api.updateCartQuantity(productId, newQuantity)
+        .then((response) => {
+          // Sync full cart from server response to keep Redux state consistent
+          if (response && response.cart) {
+            dispatch(syncCart(response.cart));
+          } else {
+            // Fallback to updateQuantity if response doesn't have full cart
+            dispatch(updateQuantity({ productId, quantity: newQuantity }));
+          }
+          onQuantityChange?.(newQuantity);
+          showToast('✅ Quantity updated', 'success');
+        })
+        .catch((error) => {
+          showToast(`❌ ${error.message || 'Failed to update cart'}`, 'error');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
-  }, [productId, currentQuantity, dispatch, onQuantityChange]);
+  }, [isLoading, productId, cartItems, dispatch, onQuantityChange, showToast, isLoggedIn, initialQuantity]);
 
 
 

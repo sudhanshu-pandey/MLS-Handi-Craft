@@ -1,11 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from './store/hooks'
-import { loadCart } from './store/slices/cartSlice'
+import { useAppDispatch } from './store/hooks'
 import { loadWishlist } from './store/slices/wishlistSlice'
-import { loadCartFromLocalStorage, loadWishlistFromLocalStorage } from './store/middleware/cartPersistence'
+import { loadWishlistFromLocalStorage } from './store/middleware/cartPersistence'
 import { ToastProvider } from './context/ToastContext'
-import api from './services/api'
 import TopHeader from './components/TopHeader/TopHeader.tsx'
 import Navbar from './components/Navbar/Navbar.tsx'
 import Header from './components/Header/Header.tsx'
@@ -25,39 +23,15 @@ const OrderTracking = lazy(() => import('./pages/OrderTracking.tsx'))
 
 function App() {
   const dispatch = useAppDispatch()
-  const cartItems = useAppSelector((state) => state.cart.items)
 
-  // Load cart and wishlist from localStorage on app start
+  // Load wishlist from localStorage on app start
+  // Cart is now loaded from database on login only
   useEffect(() => {
-    const cartData = loadCartFromLocalStorage()
-    if (cartData.length > 0) {
-      dispatch(loadCart(cartData))
-    }
-
     const wishlistData = loadWishlistFromLocalStorage()
     if (wishlistData.length > 0) {
       dispatch(loadWishlist(wishlistData))
     }
   }, [dispatch])
-
-  // Listen for login event and sync cart to database
-  useEffect(() => {
-    const handleUserLogin = async () => {
-      try {
-        if (cartItems.length > 0) {
-          await api.request('/cart/sync', {
-            method: 'POST',
-            body: JSON.stringify({ items: cartItems }),
-          })
-        }
-      } catch (error) {
-        // Cart sync failed
-      }
-    }
-
-    window.addEventListener('userLoggedIn', handleUserLogin)
-    return () => window.removeEventListener('userLoggedIn', handleUserLogin)
-  }, [cartItems])
 
   return (
     <ToastProvider>
