@@ -146,6 +146,7 @@ export interface Category {
   slug: string
   description?: string
   image?: string
+  images?: string[]
   isActive: boolean
   productCount?: number
   createdAt: string
@@ -172,6 +173,7 @@ export interface Banner {
   title: string
   subtitle?: string
   image: string
+  images?: string[]
   link?: string
   order: number
   isActive: boolean

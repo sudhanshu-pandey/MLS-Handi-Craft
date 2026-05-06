@@ -10,6 +10,7 @@ import {
   ArrowTrendingUpIcon,
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
 import KPICard from '../../components/common/KPICard'
 import PageHeader from '../../components/common/PageHeader'
@@ -18,6 +19,7 @@ import { formatCurrency, formatNumber, formatDateTime } from '../../utils/format
 import { analyticsService } from '../../services/analyticsService'
 import { orderService } from '../../services/orderService'
 import { productService } from '../../services/productService'
+import { useStockNotifications, LOW_STOCK_THRESHOLD } from '../../hooks/useStockNotifications'
 import {
   generateKPIs,
   MOCK_ORDERS,
@@ -47,19 +49,42 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   )
 }
 
+const EMPTY_KPI_DATA: KPIData = {
+  totalRevenue: 0,
+  revenueChange: 0,
+  totalOrders: 0,
+  ordersChange: 0,
+  totalUsers: 0,
+  usersChange: 0,
+  avgOrderValue: 0,
+  aovChange: 0,
+  conversionRate: 0,
+  conversionChange: 0,
+  todayOrders: 0,
+  monthOrders: 0,
+}
+
 export default function DashboardPage() {
   const [period, setPeriod] = useState(30)
   const [chartType, setChartType] = useState<'area' | 'bar'>('area')
   const [isLoading, setIsLoading] = useState(true)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
 
-  const [kpis, setKpis] = useState<KPIData>(generateKPIs())
+  const [kpis, setKpis] = useState<KPIData>(EMPTY_KPI_DATA)
   const [revenueTrend, setRevenueTrend] = useState<RevenueData[]>([])
   const [monthlyTrend, setMonthlyTrend] = useState<RevenueData[]>([])
   const [categoryRevenue, setCategoryRevenue] = useState<CategoryRevenue[]>([])
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS as unknown as Order[])
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS as unknown as Product[])
+  const [orders, setOrders] = useState<Order[]>([])
+  const [products, setProducts] = useState<Product[]>([])
 
-  const lowStockProducts = useMemo(() => products.filter(p => p.stock < 5), [products])
+  const lowStockProducts = useMemo(
+    () => products.filter(p => p.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock),
+    [products],
+  )
+  const outOfStockCount = lowStockProducts.filter(p => p.stock === 0).length
+  const actualLowCount = lowStockProducts.filter(p => p.stock > 0).length
+
+  useStockNotifications(products)
   const recentOrders = useMemo(
     () => [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5),
     [orders]
@@ -77,19 +102,20 @@ export default function DashboardPage() {
         productService.getAll({ limit: 500 }),
       ])
 
-      setKpis(kpiRes.data || generateKPIs())
+      setKpis(kpiRes.data || EMPTY_KPI_DATA)
       setRevenueTrend(revenueRes.data?.data || [])
       setMonthlyTrend((monthlyRes.data?.data || []).slice(-12))
       setCategoryRevenue(categoryRes.data?.data || [])
       setOrders(orderRes.data?.orders || [])
       setProducts(productRes.data?.products || [])
     } catch {
-      setKpis(generateKPIs())
+      // No fallback to mock data - show empty state instead
+      setKpis(EMPTY_KPI_DATA)
       setRevenueTrend([])
       setMonthlyTrend([])
       setCategoryRevenue([])
-      setOrders(MOCK_ORDERS as unknown as Order[])
-      setProducts(MOCK_PRODUCTS as unknown as Product[])
+      setOrders([])
+      setProducts([])
     } finally {
       setIsLoading(false)
     }
@@ -98,6 +124,18 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboardData()
   }, [loadDashboardData])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <div className="w-16 h-16 rounded-full border-4 border-primary-600 border-t-transparent animate-spin" />
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Loading dashboard data</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Please wait while we fetch the latest reports and analytics.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -110,6 +148,65 @@ export default function DashboardPage() {
           </div>
         }
       />
+
+      {/* Stock Alert Banners */}
+      {!bannerDismissed && (outOfStockCount > 0 || actualLowCount > 0) && (
+        <div className="space-y-2">
+          {outOfStockCount > 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800">
+              <ExclamationTriangleIcon className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <p className="flex-1 min-w-0 text-sm text-red-700 dark:text-red-300">
+                <span className="font-semibold">
+                  {outOfStockCount} product{outOfStockCount > 1 ? 's' : ''} out of stock
+                </span>
+                {' — '}
+                {lowStockProducts
+                  .filter(p => p.stock === 0)
+                  .slice(0, 3)
+                  .map(p => p.name)
+                  .join(', ')}
+                {outOfStockCount > 3 ? ` +${outOfStockCount - 3} more` : ''}
+              </p>
+              <a
+                href="/products"
+                className="text-xs font-semibold text-red-700 dark:text-red-300 hover:underline whitespace-nowrap"
+              >
+                Restock now →
+              </a>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="text-red-400 hover:text-red-600 flex-shrink-0"
+                aria-label="Dismiss alert"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {actualLowCount > 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+              <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <p className="flex-1 min-w-0 text-sm text-yellow-700 dark:text-yellow-300">
+                <span className="font-semibold">
+                  {actualLowCount} product{actualLowCount > 1 ? 's are' : ' is'} running low
+                </span>
+                {' — '}
+                {lowStockProducts
+                  .filter(p => p.stock > 0)
+                  .slice(0, 3)
+                  .map(p => `${p.name} (${p.stock} left)`)
+                  .join(', ')}
+                {actualLowCount > 3 ? ` +${actualLowCount - 3} more` : ''}
+              </p>
+              <a
+                href="/products"
+                className="text-xs font-semibold text-yellow-700 dark:text-yellow-300 hover:underline whitespace-nowrap"
+              >
+                View →
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">

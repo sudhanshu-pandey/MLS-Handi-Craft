@@ -1,27 +1,30 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, FunnelChart, Funnel, LabelList,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline'
 import PageHeader from '../../components/common/PageHeader'
 import { formatCurrency, formatNumber } from '../../utils/formatters'
 import { analyticsService } from '../../services/analyticsService'
-import {
-  generateRevenueTrend, generateMonthlyTrend, generateCategoryRevenue,
-  generateKPIs, MOCK_ORDERS,
-} from '../../utils/mockData'
 import type { KPIData, RevenueData, CategoryRevenue, Order } from '../../types'
 
-const PIE_COLORS = ['#f17010', '#3b82f6', '#10b981', '#8b5cf6', '#f43f5e', '#06b6d4']
+const EMPTY_KPI_DATA: KPIData = {
+  totalRevenue: 0,
+  revenueChange: 0,
+  totalOrders: 0,
+  ordersChange: 0,
+  totalUsers: 0,
+  usersChange: 0,
+  avgOrderValue: 0,
+  aovChange: 0,
+  conversionRate: 0,
+  conversionChange: 0,
+  todayOrders: 0,
+  monthOrders: 0,
+}
 
-const FUNNEL_DATA = [
-  { name: 'Visitors', value: 12500, fill: '#3b82f6' },
-  { name: 'Product Views', value: 8200, fill: '#8b5cf6' },
-  { name: 'Add to Cart', value: 3100, fill: '#f17010' },
-  { name: 'Checkout', value: 1800, fill: '#10b981' },
-  { name: 'Purchased', value: 975, fill: '#22c55e' },
-]
+const PIE_COLORS = ['#f17010', '#3b82f6', '#10b981', '#8b5cf6', '#f43f5e', '#06b6d4']
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
@@ -40,11 +43,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState<30 | 90 | 180>(30)
   const [isLoading, setIsLoading] = useState(true)
-  const [kpis, setKpis] = useState<KPIData>(generateKPIs())
-  const [revenueTrend, setRevenueTrend] = useState<RevenueData[]>(generateRevenueTrend(30))
-  const [monthlyTrend, setMonthlyTrend] = useState<RevenueData[]>(generateMonthlyTrend(12))
-  const [categoryRevenue, setCategoryRevenue] = useState<CategoryRevenue[]>(generateCategoryRevenue())
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS as unknown as Order[])
+  const [kpis, setKpis] = useState<KPIData>(EMPTY_KPI_DATA)
+  const [revenueTrend, setRevenueTrend] = useState<RevenueData[]>([])
+  const [monthlyTrend, setMonthlyTrend] = useState<RevenueData[]>([])
+  const [categoryRevenue, setCategoryRevenue] = useState<CategoryRevenue[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
 
   const loadAnalytics = useCallback(async () => {
     setIsLoading(true)
@@ -57,17 +60,17 @@ export default function AnalyticsPage() {
         analyticsService.getOrderStats(500),
       ])
 
-      setKpis(kpiRes.data || generateKPIs())
-      setRevenueTrend(revenueRes.data?.data || generateRevenueTrend(period))
-      setMonthlyTrend((monthlyRes.data?.data || generateMonthlyTrend(12)).slice(-12))
-      setCategoryRevenue(categoryRes.data?.data || generateCategoryRevenue())
-      setOrders(orderRes.data?.orders || (MOCK_ORDERS as unknown as Order[]))
+      setKpis(kpiRes.data || EMPTY_KPI_DATA)
+      setRevenueTrend(revenueRes.data?.data || [])
+      setMonthlyTrend((monthlyRes.data?.data || []).slice(-12))
+      setCategoryRevenue(categoryRes.data?.data || [])
+      setOrders(orderRes.data?.orders || [])
     } catch {
-      setKpis(generateKPIs())
-      setRevenueTrend(generateRevenueTrend(period))
-      setMonthlyTrend(generateMonthlyTrend(12))
-      setCategoryRevenue(generateCategoryRevenue())
-      setOrders(MOCK_ORDERS as unknown as Order[])
+      setKpis(EMPTY_KPI_DATA)
+      setRevenueTrend([])
+      setMonthlyTrend([])
+      setCategoryRevenue([])
+      setOrders([])
     } finally {
       setIsLoading(false)
     }
@@ -83,8 +86,24 @@ export default function AnalyticsPage() {
     return Object.entries(counts).map(([name, value]) => ({ name: name.toUpperCase(), value }))
   }, [orders])
 
-  const conversionRate = ((FUNNEL_DATA[4].value / FUNNEL_DATA[0].value) * 100).toFixed(1)
-  const cartAbandonRate = (((FUNNEL_DATA[2].value - FUNNEL_DATA[4].value) / FUNNEL_DATA[2].value) * 100).toFixed(1)
+  const funnelData = useMemo(() => {
+    const totalOrders = orders.length
+    const confirmed = orders.filter(o => o.status === 'confirmed').length
+    const shipped = orders.filter(o => o.status === 'shipped' || o.status === 'out_for_delivery').length
+    const delivered = orders.filter(o => o.status === 'delivered').length
+    const cancelled = orders.filter(o => o.status === 'cancelled').length
+
+    return [
+      { name: 'Orders', value: totalOrders, fill: '#3b82f6' },
+      { name: 'Confirmed', value: confirmed, fill: '#8b5cf6' },
+      { name: 'Shipped', value: shipped, fill: '#f17010' },
+      { name: 'Delivered', value: delivered, fill: '#10b981' },
+      { name: 'Cancelled', value: cancelled, fill: '#ef4444' },
+    ]
+  }, [orders])
+
+  const conversionRate = kpis.conversionRate.toFixed(1)
+  const cartAbandonRate = orders.length > 0 ? ((funnelData[4].value / funnelData[0].value) * 100).toFixed(1) : '0.0'
 
   const exportCSV = () => {
     const rows = revenueTrend.map(d => `${d.date},${d.revenue},${d.orders}`)
@@ -94,6 +113,18 @@ export default function AnalyticsPage() {
     const a = document.createElement('a')
     a.href = url; a.download = 'analytics.csv'; a.click()
     URL.revokeObjectURL(url)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <div className="w-16 h-16 rounded-full border-4 border-primary-600 border-t-transparent animate-spin" />
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Loading analytics</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Fetching the latest revenue, order, and category metrics.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -215,8 +246,9 @@ export default function AnalyticsPage() {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">From visitor to purchase</p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
           <div className="space-y-3">
-            {FUNNEL_DATA.map((stage, i) => {
-              const pct = ((stage.value / FUNNEL_DATA[0].value) * 100).toFixed(1)
+            {funnelData.map((stage, i) => {
+              const total = funnelData[0]?.value || 1
+              const pct = total > 0 ? ((stage.value / total) * 100).toFixed(1) : '0.0'
               return (
                 <div key={stage.name}>
                   <div className="flex justify-between text-sm mb-1">
@@ -229,9 +261,9 @@ export default function AnalyticsPage() {
                       style={{ width: `${pct}%`, backgroundColor: stage.fill }}
                     />
                   </div>
-                  {i < FUNNEL_DATA.length - 1 && (
+                  {i < funnelData.length - 1 && funnelData[i].value > 0 && (
                     <p className="text-xs text-red-500 mt-0.5 text-right">
-                      Drop: {(((FUNNEL_DATA[i].value - FUNNEL_DATA[i + 1].value) / FUNNEL_DATA[i].value) * 100).toFixed(0)}%
+                      Drop: {(((funnelData[i].value - funnelData[i + 1].value) / funnelData[i].value) * 100).toFixed(0)}%
                     </p>
                   )}
                 </div>
@@ -240,13 +272,13 @@ export default function AnalyticsPage() {
           </div>
           <div>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={FUNNEL_DATA} layout="vertical">
+              <BarChart data={funnelData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                 <Tooltip />
-                <Bar dataKey="value" name="Users" radius={[0, 4, 4, 0]}>
-                  {FUNNEL_DATA.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                <Bar dataKey="value" name="Orders" radius={[0, 4, 4, 0]}>
+                  {funnelData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
