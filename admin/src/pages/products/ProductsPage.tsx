@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
+  ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
+import Papa from 'papaparse'
 import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable, { Column } from '../../components/common/DataTable'
@@ -15,14 +17,16 @@ import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { formatCurrency, formatDate } from '../../utils/formatters'
 import { productService } from '../../services/productService'
 import { MOCK_PRODUCTS } from '../../utils/mockData'
-import type { Product } from '../../types'
+import type { Product, ProductFormData } from '../../types'
 
 export default function ProductsPage() {
   const navigate = useNavigate()
+  const importInputRef = useRef<HTMLInputElement | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterStock, setFilterStock] = useState('all')
 
@@ -174,16 +178,175 @@ export default function ProductsPage() {
     totalValue: products.reduce((sum, p) => sum + p.price * p.stock, 0),
   }
 
+  const parseListField = (value: unknown) => {
+    return String(value || '')
+      .split(/[|,\n]/)
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  const mapCsvRowToProduct = (row: Record<string, unknown>) => {
+    const images = parseListField(row.images || row.image)
+    const tags = parseListField(row.tags)
+
+    const product: ProductFormData = {
+      name: String(row.name || '').trim(),
+      description: String(row.description || '').trim(),
+      price: Number(row.price || 0),
+      originalPrice: Number(row.originalPrice || row.original_price || 0),
+      images,
+      category: String(row.category || '').trim(),
+      stock: Number(row.stock || 0),
+      artisan: {
+        name: String(row.artisanName || row.artisan_name || '').trim(),
+        region: String(row.artisanRegion || row.artisan_region || '').trim(),
+        craftType: String(row.artisanCraftType || row.artisan_craft_type || '').trim(),
+      },
+      specifications: {
+        dimensions: String(row.dimensions || '').trim(),
+        weight: String(row.weight || '').trim(),
+        material: String(row.material || '').trim(),
+        origin: String(row.origin || '').trim(),
+      },
+      tags,
+    }
+
+    return product
+  }
+
+  const handleImportCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+
+    Papa.parse<Record<string, unknown>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const parsedRows = results.data
+            .map(mapCsvRowToProduct)
+            .filter(item => item.name && item.category && item.price > 0)
+
+          if (!parsedRows.length) {
+            toast.error('No valid products found in CSV. Required columns: name, price, category')
+            return
+          }
+
+          let importedCount = 0
+          const failedRows: string[] = []
+
+          for (const [index, product] of parsedRows.entries()) {
+            try {
+              await productService.create(product)
+              importedCount += 1
+            } catch (error) {
+              const message = error instanceof Error ? error.message : 'Failed to import row'
+              failedRows.push(`Row ${index + 2}: ${message}`)
+            }
+          }
+
+          if (importedCount > 0) {
+            await loadProducts()
+            toast.success(`${importedCount} product${importedCount > 1 ? 's' : ''} imported successfully`)
+          }
+
+          if (failedRows.length) {
+            toast.error(failedRows[0])
+          }
+        } finally {
+          setIsImporting(false)
+          event.target.value = ''
+        }
+      },
+      error: (error) => {
+        setIsImporting(false)
+        event.target.value = ''
+        toast.error(error.message || 'Failed to parse CSV file')
+      },
+    })
+  }
+
+  const downloadSampleCsv = () => {
+    const headers = [
+      'name',
+      'description',
+      'price',
+      'originalPrice',
+      'category',
+      'stock',
+      'images',
+      'tags',
+      'artisanName',
+      'artisanRegion',
+      'artisanCraftType',
+      'dimensions',
+      'weight',
+      'material',
+      'origin',
+    ]
+
+    const sampleRows = [
+      [
+        'Madhubani Painting',
+        'Traditional folk art painting from Bihar',
+        '2499',
+        '2999',
+        'Paintings',
+        '12',
+        'https://example.com/madhubani-1.jpg|https://example.com/madhubani-2.jpg',
+        'folk art|wall decor|handmade',
+        'Sita Devi',
+        'Madhubani, Bihar',
+        'Madhubani Painting',
+        '30x40 cm',
+        '500g',
+        'Handmade paper, natural colors',
+        'Bihar, India',
+      ],
+    ]
+
+    const csv = [headers.join(','), ...sampleRows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'product-import-template.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6">
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={handleImportCsv}
+      />
       <PageHeader
         title="Products"
         subtitle={`${stats.total} total products`}
         actions={
           <>
-            <button className="btn-secondary text-sm">
+            <button
+              className="btn-secondary text-sm"
+              type="button"
+              onClick={downloadSampleCsv}
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              Sample CSV
+            </button>
+            <button
+              className="btn-secondary text-sm"
+              type="button"
+              onClick={() => importInputRef.current?.click()}
+              disabled={isImporting}
+            >
               <ArrowUpTrayIcon className="w-4 h-4" />
-              Import CSV
+              {isImporting ? 'Importing...' : 'Import CSV'}
             </button>
             <button onClick={() => navigate('/products/new')} className="btn-primary text-sm">
               <PlusIcon className="w-4 h-4" />

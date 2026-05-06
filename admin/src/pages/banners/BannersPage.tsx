@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PlusIcon, PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
+import { ArrowUpTrayIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
 import Badge from '../../components/common/Badge'
@@ -8,8 +8,8 @@ import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { bannerService } from '../../services/bannerService'
 import type { Banner } from '../../types'
 
-interface BannerForm { title: string; subtitle: string; image: string; link: string; order: number; isActive: boolean }
-const EMPTY_FORM: BannerForm = { title: '', subtitle: '', image: '', link: '', order: 1, isActive: true }
+interface BannerForm { title: string; subtitle: string; image: string; images: string[]; link: string; order: number; isActive: boolean }
+const EMPTY_FORM: BannerForm = { title: '', subtitle: '', image: '', images: [], link: '', order: 1, isActive: true }
 
 const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'object' && error !== null) {
@@ -27,6 +27,7 @@ const normalizeBanner = (raw: Record<string, unknown>): Banner => ({
   title: String(raw.title || ''),
   subtitle: String(raw.subtitle || raw.description || ''),
   image: String(raw.image || ''),
+  images: Array.isArray(raw.images) ? raw.images.map(item => String(item || '')).filter(Boolean) : [],
   link: String(raw.link || ''),
   order: Number(raw.order || 0),
   isActive: typeof raw.isActive === 'boolean' ? raw.isActive : Boolean(raw.active ?? true),
@@ -62,6 +63,9 @@ export default function BannersPage() {
   const [editBanner, setEditBanner] = useState<Banner | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [form, setForm] = useState<BannerForm>(EMPTY_FORM)
+  const [bulkImageUrls, setBulkImageUrls] = useState('')
+  const [imageOptions, setImageOptions] = useState<string[]>([])
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -81,11 +85,63 @@ export default function BannersPage() {
     load()
   }, [])
 
-  const openCreate = () => { setEditBanner(null); setForm({ ...EMPTY_FORM, order: banners.length + 1 }); setModalOpen(true) }
-  const openEdit = (b: Banner) => { setEditBanner(b); setForm({ title: b.title, subtitle: b.subtitle || '', image: b.image, link: b.link || '', order: b.order, isActive: b.isActive }); setModalOpen(true) }
+  const openCreate = () => {
+    setEditBanner(null)
+    setForm({ ...EMPTY_FORM, order: banners.length + 1 })
+    setModalOpen(true)
+  }
+
+  const openEdit = (b: Banner) => {
+    setEditBanner(b)
+    setForm({ title: b.title, subtitle: b.subtitle || '', image: b.image || '', images: b.image ? [b.image] : [], link: b.link || '', order: b.order, isActive: b.isActive })
+    setModalOpen(true)
+  }
+
+  const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result)
+        return
+      }
+      reject(new Error('Unable to read selected file'))
+    }
+    reader.onerror = () => reject(new Error('File upload failed while reading image'))
+    reader.readAsDataURL(file)
+  })
+
+  const handleBannerImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const [file] = Array.from(event.target.files || [])
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Please upload an image smaller than 5MB')
+      event.target.value = ''
+      return
+    }
+
+    setIsUploadingImages(true)
+    try {
+      const uploadedImage = await readFileAsDataUrl(file)
+      setForm(current => ({
+        ...current,
+        image: uploadedImage,
+        images: [uploadedImage],
+      }))
+      setImageOptions([uploadedImage])
+      toast.success('Banner image uploaded from laptop')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to upload selected images'
+      toast.error(message)
+    } finally {
+      setIsUploadingImages(false)
+      event.target.value = ''
+    }
+  }
 
   const handleSave = async () => {
     if (!form.title || !form.image) return toast.error('Title and image are required')
+    
     setIsSaving(true)
 
     const payload = {
@@ -93,6 +149,7 @@ export default function BannersPage() {
       description: form.subtitle || form.title,
       subtitle: form.subtitle,
       image: form.image,
+      images: form.image ? [form.image] : [],
       link: form.link,
       order: form.order,
       active: form.isActive,
@@ -145,8 +202,32 @@ export default function BannersPage() {
         <div className="space-y-4">
           {banners.map((banner, idx) => (
             <div key={banner._id} className="card overflow-hidden flex flex-col sm:flex-row">
-              <div className="w-full sm:w-48 h-28 flex-shrink-0 bg-gray-100 dark:bg-gray-700">
-                <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${banner._id}/200/100` }} />
+              <div className="group relative w-full sm:w-48 h-28 flex-shrink-0 bg-gray-100 dark:bg-gray-700">
+                <img
+                  src={(banner.images?.[0] || banner.image)}
+                  alt={banner.title}
+                  className="w-full h-full object-cover"
+                  onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${banner._id}/200/100` }}
+                />
+                {(banner.images?.length || 0) > 1 && (
+                  <span className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs font-semibold text-white">
+                    +{(banner.images?.length || 1) - 1}
+                  </span>
+                )}
+
+                {(banner.images?.length || 0) > 1 && (
+                  <div className="pointer-events-none absolute inset-x-2 bottom-2 hidden items-center gap-1 rounded-md bg-black/60 p-1 group-hover:flex">
+                    {banner.images?.slice(1, 4).map((img, imgIdx) => (
+                      <img
+                        key={`${banner._id}-hover-${imgIdx}`}
+                        src={img}
+                        alt={`${banner.title} preview ${imgIdx + 1}`}
+                        className="h-7 w-7 rounded object-cover ring-1 ring-white/40"
+                        onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${banner._id}-${imgIdx}/80` }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -179,7 +260,24 @@ export default function BannersPage() {
         <div className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Title *</label><input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="input-field" /></div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Subtitle</label><input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} className="input-field" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Image URL *</label><input value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} className="input-field" placeholder="https://..." /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Image URL *</label><input value={form.image} onChange={e => { const value = e.target.value; setForm(f => ({ ...f, image: value, images: value ? [value] : [] })); setImageOptions(value ? [value] : []) }} className="input-field" placeholder="https://..." /></div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Upload Banner Image</label>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2">
+                <ArrowUpTrayIcon className="w-4 h-4" />
+                {isUploadingImages ? 'Uploading...' : 'Upload From Laptop'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isUploadingImages}
+                  onChange={handleBannerImageUpload}
+                />
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Only one banner image can be selected at a time.</p>
+          </div>
           {form.image && <img src={form.image} className="w-full h-24 object-cover rounded-lg" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Link URL</label><input value={form.link} onChange={e => setForm(f => ({ ...f, link: e.target.value }))} className="input-field" placeholder="/products" /></div>

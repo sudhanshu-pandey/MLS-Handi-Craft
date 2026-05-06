@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { ArrowUpTrayIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable, { Column } from '../../components/common/DataTable'
@@ -10,8 +10,8 @@ import { formatDate } from '../../utils/formatters'
 import { categoryService } from '../../services/categoryService'
 import type { Category } from '../../types'
 
-interface CatForm { name: string; slug: string; description: string; image: string; isActive: boolean }
-const EMPTY_FORM: CatForm = { name: '', slug: '', description: '', image: '', isActive: true }
+interface CatForm { name: string; slug: string; description: string; image: string; images: string[]; isActive: boolean }
+const EMPTY_FORM: CatForm = { name: '', slug: '', description: '', image: '', images: [], isActive: true }
 
 const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'object' && error !== null) {
@@ -30,6 +30,7 @@ const normalizeCategory = (raw: Record<string, unknown>): Category => ({
   slug: String(raw.slug || ''),
   description: String(raw.description || ''),
   image: String(raw.image || ''),
+  images: Array.isArray(raw.images) ? raw.images.map(item => String(item || '')).filter(Boolean) : [],
   isActive: typeof raw.isActive === 'boolean' ? raw.isActive : Boolean(raw.active ?? true),
   productCount: Number(raw.productCount || 0),
   createdAt: String(raw.createdAt || new Date().toISOString()),
@@ -64,6 +65,7 @@ export default function CategoriesPage() {
   const [editCat, setEditCat] = useState<Category | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [form, setForm] = useState<CatForm>(EMPTY_FORM)
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -84,11 +86,64 @@ export default function CategoriesPage() {
     load()
   }, [])
 
-  const openCreate = () => { setEditCat(null); setForm(EMPTY_FORM); setModalOpen(true) }
+  const openCreate = () => {
+    setEditCat(null)
+    setForm(EMPTY_FORM)
+    setModalOpen(true)
+  }
   const openEdit = (cat: Category) => {
     setEditCat(cat)
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', image: cat.image || '', isActive: cat.isActive })
+    const primaryImage = cat.image || cat.images?.[0] || ''
+    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', image: primaryImage, images: primaryImage ? [primaryImage] : [], isActive: cat.isActive })
     setModalOpen(true)
+  }
+
+  const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result)
+        return
+      }
+      reject(new Error('Unable to read selected file'))
+    }
+    reader.onerror = () => reject(new Error('File upload failed while reading image'))
+    reader.readAsDataURL(file)
+  })
+
+  const handleCategoryImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+
+    if (files.length > 1) {
+      toast.error('Only one image can be selected for a category')
+    }
+
+    const file = files[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Please upload images smaller than 5MB each')
+      event.target.value = ''
+      return
+    }
+
+    setIsUploadingImages(true)
+    try {
+      const uploadedImage = await readFileAsDataUrl(file)
+      setForm(current => ({
+        ...current,
+        image: uploadedImage,
+        images: [uploadedImage],
+      }))
+      toast.success('Category image uploaded from laptop')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to upload selected images'
+      toast.error(message)
+    } finally {
+      setIsUploadingImages(false)
+      event.target.value = ''
+    }
   }
 
   const handleSave = async () => {
@@ -100,6 +155,7 @@ export default function CategoriesPage() {
       slug: form.slug,
       description: form.description,
       image: form.image,
+      images: form.image ? [form.image] : [],
       active: form.isActive,
       isActive: form.isActive,
     }
@@ -142,6 +198,24 @@ export default function CategoriesPage() {
   }
 
   const columns: Column<Category>[] = [
+    {
+      key: 'image',
+      header: 'Image',
+      render: row => {
+        const primary = row.image || row.images?.[0] || `https://picsum.photos/seed/${row._id}/80`
+
+        return (
+          <div className="relative h-12 w-12">
+            <img
+              src={primary}
+              alt={row.name}
+              className="h-full w-full rounded-lg border border-gray-200 bg-gray-100 object-cover dark:border-gray-700 dark:bg-gray-800"
+              onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${row._id}/80` }}
+            />
+          </div>
+        )
+      },
+    },
     { key: 'name', header: 'Name', sortable: true, render: row => <span className="font-semibold text-gray-900 dark:text-white">{row.name}</span> },
     { key: 'slug', header: 'Slug', render: row => <code className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-400">{row.slug}</code> },
     { key: 'description', header: 'Description', render: row => <span className="text-sm text-gray-500 truncate max-w-52 block">{row.description || '-'}</span> },
@@ -181,7 +255,24 @@ export default function CategoriesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Image URL</label>
-            <input value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} className="input-field" placeholder="https://..." />
+            <input value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value, images: e.target.value ? [e.target.value] : [] }))} className="input-field" placeholder="https://..." />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Upload Category Image</label>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2">
+                <ArrowUpTrayIcon className="w-4 h-4" />
+                {isUploadingImages ? 'Uploading...' : 'Upload From Laptop'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isUploadingImages}
+                  onChange={handleCategoryImageUpload}
+                />
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Only one image is allowed for a category.</p>
+            </div>
           </div>
           {form.image && (
             <img

@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeftIcon, PhotoIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, ArrowUpTrayIcon, PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
+import RichTextEditor from '../../components/common/RichTextEditor'
 import { productService } from '../../services/productService'
-import { uploadService } from '../../services/uploadService'
 import { MOCK_PRODUCTS } from '../../utils/mockData'
+import { validatePrice, validateStock } from '../../utils/validation'
 import type { ProductFormData } from '../../types'
 
 const DEFAULT_CATEGORIES = ['Paintings', 'Pottery', 'Textiles', 'Metalcraft', 'Woodcraft', 'Jewelry', 'Handicrafts']
@@ -23,6 +24,16 @@ const INITIAL_FORM: ProductFormData = {
   tags: [],
 }
 
+const normalizeSpecifications = (specifications: Record<string, any> | undefined) => {
+  const specs = specifications || {}
+  return {
+    dimensions: specs.dimensions || specs.dimension || '',
+    weight: specs.weight || '',
+    material: specs.material || specs.matrial || specs.category || '',
+    origin: specs.origin || specs.countryOfOrigin || '',
+  }
+}
+
 export default function ProductFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -32,9 +43,10 @@ export default function ProductFormPage() {
   const [isLoading, setIsLoading] = useState(isEdit)
   const [isSaving, setIsSaving] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
+  const [bulkImageUrls, setBulkImageUrls] = useState('')
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
+  const [showDescriptionPreview, setShowDescriptionPreview] = useState(false)
   const [tagInput, setTagInput] = useState('')
-  const [isUploading, setIsUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!isEdit) return
@@ -52,7 +64,7 @@ export default function ProductFormPage() {
           category: p.category || '',
           stock: p.stock || 0,
           artisan: p.artisan || p.artisanInfo || { name: '', region: '', craftType: '' },
-          specifications: p.specifications || {},
+          specifications: normalizeSpecifications(p.specifications),
           tags: p.tags || [],
         })
       } catch {
@@ -62,7 +74,7 @@ export default function ProductFormPage() {
             name: mock.name, description: mock.description, price: mock.price,
             originalPrice: mock.originalPrice, images: mock.images, category: mock.category,
             stock: mock.stock, artisan: mock.artisan || { name: '', region: '', craftType: '' },
-            specifications: mock.specifications || {}, tags: mock.tags || [],
+            specifications: normalizeSpecifications(mock.specifications), tags: mock.tags || [],
           })
         }
       } finally {
@@ -96,27 +108,84 @@ export default function ProductFormPage() {
     }
   }
 
+  const appendImages = (nextImages: string[]) => {
+    if (!nextImages.length) return
+
+    setForm(current => {
+      const existing = current.images || []
+      const uniqueNew = nextImages.filter(url => url && !existing.includes(url))
+      if (!uniqueNew.length) {
+        return current
+      }
+
+      return {
+        ...current,
+        images: [...existing, ...uniqueNew],
+      }
+    })
+  }
+
   const addImage = () => {
     if (!imageUrl.trim()) return
-    setForm(f => ({ ...f, images: [...(f.images || []), imageUrl.trim()] }))
+    appendImages([imageUrl.trim()])
     setImageUrl('')
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files?.length) return
-    setIsUploading(true)
-    try {
-      for (const file of Array.from(files)) {
-        const url = await uploadService.uploadImage(file)
-        setForm(f => ({ ...f, images: [...(f.images || []), url] }))
+  const addBulkImageUrls = () => {
+    if (!bulkImageUrls.trim()) return
+
+    const parsedUrls = bulkImageUrls
+      .split(/\r?\n|,/) 
+      .map(url => url.trim())
+      .filter(Boolean)
+
+    if (!parsedUrls.length) {
+      toast.error('Please add at least one valid image URL')
+      return
+    }
+
+    appendImages(parsedUrls)
+    setBulkImageUrls('')
+    toast.success(`${parsedUrls.length} image URL${parsedUrls.length > 1 ? 's' : ''} added`)
+  }
+
+  const readFileAsDataUrl = (file: File) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result)
+          return
+        }
+        reject(new Error('Unable to read selected file'))
       }
-      toast.success(`${files.length} image(s) uploaded successfully`)
-    } catch (err: any) {
-      toast.error(err.message || 'Image upload failed')
+      reader.onerror = () => reject(new Error('File upload failed while reading image'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleLaptopImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024)
+    if (oversizedFiles.length) {
+      toast.error('Please upload images smaller than 5MB each')
+      event.target.value = ''
+      return
+    }
+
+    setIsUploadingImages(true)
+    try {
+      const uploadedImages = await Promise.all(files.map(file => readFileAsDataUrl(file)))
+      appendImages(uploadedImages)
+      toast.success(`${uploadedImages.length} image${uploadedImages.length > 1 ? 's' : ''} uploaded from laptop`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to upload selected images'
+      toast.error(message)
     } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      setIsUploadingImages(false)
+      event.target.value = ''
     }
   }
 
@@ -130,8 +199,18 @@ export default function ProductFormPage() {
     setTagInput('')
   }
 
-  const set = (field: keyof ProductFormData, value: unknown) =>
-    setForm(f => ({ ...f, [field]: value }))
+  const set = (field: keyof ProductFormData, value: unknown) => {
+    // Validate numeric fields
+    let sanitizedValue: any = value
+    
+    if ((field === 'price' || field === 'originalPrice') && typeof value === 'number') {
+      sanitizedValue = validatePrice(value)
+    } else if (field === 'stock' && typeof value === 'number') {
+      sanitizedValue = validateStock(value)
+    }
+    
+    setForm(f => ({ ...f, [field]: sanitizedValue }))
+  }
 
   if (isLoading) {
     return (
@@ -181,14 +260,33 @@ export default function ProductFormPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
-                <textarea
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                    onClick={() => setShowDescriptionPreview(prev => !prev)}
+                  >
+                    {showDescriptionPreview ? 'Hide Preview' : 'Show Preview'}
+                  </button>
+                </div>
+                <RichTextEditor
                   value={form.description}
-                  onChange={e => set('description', e.target.value)}
-                  className="input-field resize-none"
-                  rows={4}
+                  onChange={value => set('description', value)}
                   placeholder="Describe the product, its origin, craft technique..."
                 />
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Supports bold, italic, underline, bullets, numbering, heading, quote, alignment, links, and images.
+                </p>
+                {showDescriptionPreview && (
+                  <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-slate-900">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Live Preview</p>
+                    <div
+                      className="space-y-3 text-sm leading-7 text-gray-700 dark:text-slate-200 [&_a]:text-primary-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-primary-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_h3]:text-lg [&_h3]:font-semibold [&_img]:max-h-52 [&_img]:rounded-md [&_img]:object-contain [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
+                      dangerouslySetInnerHTML={{ __html: form.description || '<p>No description yet.</p>' }}
+                    />
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -222,42 +320,46 @@ export default function ProductFormPage() {
             {/* Images */}
             <div className="card p-5 space-y-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">Product Images</h3>
-              {/* URL input row */}
-              <div className="flex gap-2">
-                <input
-                  value={imageUrl}
-                  onChange={e => setImageUrl(e.target.value)}
-                  className="input-field"
-                  placeholder="Image URL (https://...)"
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addImage())}
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={imageUrl}
+                    onChange={e => setImageUrl(e.target.value)}
+                    className="input-field"
+                    placeholder="Image URL (https://...)"
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addImage())}
+                  />
+                  <button type="button" onClick={addImage} className="btn-primary flex-shrink-0" title="Add this URL">
+                    <PlusIcon className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <textarea
+                  value={bulkImageUrls}
+                  onChange={e => setBulkImageUrls(e.target.value)}
+                  className="input-field resize-none"
+                  rows={3}
+                  placeholder="Paste multiple image URLs (one per line or comma-separated)"
                 />
-                <button type="button" onClick={addImage} className="btn-primary flex-shrink-0">
-                  <PlusIcon className="w-4 h-4" />
-                </button>
-              </div>
-              {/* File upload row */}
-              <div className="flex items-center gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="image-file-upload"
-                />
-                <button
-                  type="button"
-                  disabled={isUploading}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="btn-secondary flex items-center gap-2 text-sm"
-                >
-                  <ArrowUpTrayIcon className="w-4 h-4" />
-                  {isUploading ? 'Uploading…' : 'Upload from Device'}
-                </button>
-                {isUploading && (
-                  <span className="text-xs text-gray-500 animate-pulse">Uploading to cloud…</span>
-                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={addBulkImageUrls} className="btn-secondary text-sm">
+                    Add Multiple URLs
+                  </button>
+                  <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2">
+                    <ArrowUpTrayIcon className="w-4 h-4" />
+                    {isUploadingImages ? 'Uploading...' : 'Upload From Laptop'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleLaptopImageUpload}
+                      disabled={isUploadingImages}
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">You can select multiple images at once.</p>
+                </div>
               </div>
               {form.images?.length ? (
                 <div className="grid grid-cols-3 gap-3">
@@ -278,7 +380,7 @@ export default function ProductFormPage() {
               ) : (
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
                   <PhotoIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Add image URLs above or upload from your device</p>
+                  <p className="text-sm text-gray-500">Add image URLs above</p>
                 </div>
               )}
             </div>

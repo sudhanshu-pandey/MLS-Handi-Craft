@@ -15,6 +15,8 @@ const AnalyticsPage = lazy(() => import('./pages/analytics/AnalyticsPage'))
 const CategoriesPage = lazy(() => import('./pages/categories/CategoriesPage'))
 const BannersPage = lazy(() => import('./pages/banners/BannersPage'))
 const CouponsPage = lazy(() => import('./pages/coupons/CouponsPage'))
+const SalesMapPage = lazy(() => import('./pages/map/MapPage'))
+const CalculatorPage = lazy(() => import('./pages/calculator/CalculatorPage'))
 
 export default function App() {
   return (
@@ -35,6 +37,8 @@ export default function App() {
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="banners" element={<BannersPage />} />
             <Route path="coupons" element={<CouponsPage />} />
+            <Route path="sales-map" element={<SalesMapPage />} />
+            <Route path="calculator" element={<CalculatorPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

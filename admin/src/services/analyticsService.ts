@@ -13,4 +13,6 @@ export const analyticsService = {
   getOrderStats: (limit = 500) => api.get('/orders/admin/all', { params: { limit } }),
   getProductStats: () => api.get('/products', { params: { limit: 500 } }),
   getUserStats: (limit = 500) => api.get('/user/admin/all', { params: { limit } }),
+  getStateWiseSales: (startDate?: string, endDate?: string, days = 30) =>
+    api.get('/analytics/state-wise-sales', { params: { startDate, endDate, days } }),
 }
