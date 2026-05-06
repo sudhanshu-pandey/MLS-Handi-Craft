@@ -24,6 +24,7 @@ export interface Product {
   price: number
   originalPrice: number
   images: string[]
+  videos?: string[]
   category: string
   rating: number
   reviewCount: number
@@ -33,11 +34,19 @@ export interface Product {
     region: string
     craftType: string
   }
+  artisanInfo?: {
+    name: string
+    region: string
+    craftType: string
+  }
   specifications?: {
     dimensions?: string
     weight?: string
     origin?: string
     material?: string
+    dimension?: string
+    category?: string
+    countryOfOrigin?: string
   }
   tags?: string[]
   createdAt: string
@@ -50,6 +59,7 @@ export interface ProductFormData {
   price: number
   originalPrice: number
   images: string[]
+  videos?: string[]
   category: string
   stock: number
   artisan?: {

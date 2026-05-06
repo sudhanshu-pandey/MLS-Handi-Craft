@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeftIcon, ArrowUpTrayIcon, PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, ArrowUpTrayIcon, PhotoIcon, PlusIcon, XMarkIcon, FilmIcon, PlayIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
 import RichTextEditor from '../../components/common/RichTextEditor'
@@ -17,6 +17,7 @@ const INITIAL_FORM: ProductFormData = {
   price: 0,
   originalPrice: 0,
   images: [],
+  videos: [],
   category: '',
   stock: 0,
   artisan: { name: '', region: '', craftType: '' },
@@ -44,7 +45,10 @@ export default function ProductFormPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [bulkImageUrls, setBulkImageUrls] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [bulkVideoUrls, setBulkVideoUrls] = useState('')
   const [isUploadingImages, setIsUploadingImages] = useState(false)
+  const [isUploadingVideos, setIsUploadingVideos] = useState(false)
   const [showDescriptionPreview, setShowDescriptionPreview] = useState(false)
   const [tagInput, setTagInput] = useState('')
 
@@ -55,26 +59,45 @@ export default function ProductFormPage() {
       try {
         const res = await productService.getById(id)
         const p = res.data?.product || res.data
+        const artisanData = p.artisan || p.artisanInfo || { name: '', region: '', craftType: '' }
+        
         setForm({
           name: p.name || '',
           description: p.description || '',
           price: p.price || 0,
           originalPrice: p.originalPrice || 0,
           images: p.images || [],
+          videos: p.videos || [],
           category: p.category || '',
           stock: p.stock || 0,
-          artisan: p.artisan || p.artisanInfo || { name: '', region: '', craftType: '' },
+          artisan: {
+            name: artisanData.name || '',
+            region: artisanData.region || '',
+            craftType: artisanData.craftType || '',
+          },
           specifications: normalizeSpecifications(p.specifications),
           tags: p.tags || [],
         })
-      } catch {
+      } catch (err) {
         const mock = (MOCK_PRODUCTS as any[]).find(p => p._id === id)
         if (mock) {
+          const artisanData = mock.artisan || mock.artisanInfo || { name: '', region: '', craftType: '' }
           setForm({
-            name: mock.name, description: mock.description, price: mock.price,
-            originalPrice: mock.originalPrice, images: mock.images, category: mock.category,
-            stock: mock.stock, artisan: mock.artisan || { name: '', region: '', craftType: '' },
-            specifications: normalizeSpecifications(mock.specifications), tags: mock.tags || [],
+            name: mock.name,
+            description: mock.description,
+            price: mock.price,
+            originalPrice: mock.originalPrice,
+            images: mock.images,
+            videos: mock.videos || [],
+            category: mock.category,
+            stock: mock.stock,
+            artisan: {
+              name: artisanData.name || '',
+              region: artisanData.region || '',
+              craftType: artisanData.craftType || '',
+            },
+            specifications: normalizeSpecifications(mock.specifications),
+            tags: mock.tags || [],
           })
         }
       } finally {
@@ -191,6 +214,86 @@ export default function ProductFormPage() {
 
   const removeImage = (idx: number) => {
     setForm(f => ({ ...f, images: f.images?.filter((_, i) => i !== idx) }))
+  }
+
+  const appendVideos = (nextVideos: string[]) => {
+    if (!nextVideos.length) return
+
+    setForm(current => {
+      const existing = current.videos || []
+      const uniqueNew = nextVideos.filter(url => url && !existing.includes(url))
+      if (!uniqueNew.length) {
+        return current
+      }
+
+      return {
+        ...current,
+        videos: [...existing, ...uniqueNew],
+      }
+    })
+  }
+
+  const addVideo = () => {
+    if (!videoUrl.trim()) return
+    appendVideos([videoUrl.trim()])
+    setVideoUrl('')
+  }
+
+  const addBulkVideoUrls = () => {
+    if (!bulkVideoUrls.trim()) return
+
+    const parsedUrls = bulkVideoUrls
+      .split(/\r?\n|,/)
+      .map(url => url.trim())
+      .filter(Boolean)
+
+    if (!parsedUrls.length) {
+      toast.error('Please add at least one valid video URL')
+      return
+    }
+
+    appendVideos(parsedUrls)
+    setBulkVideoUrls('')
+    toast.success(`${parsedUrls.length} video URL${parsedUrls.length > 1 ? 's' : ''} added`)
+  }
+
+  const handleLaptopVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+
+    const oversizedFiles = files.filter(file => file.size > 100 * 1024 * 1024) // 100MB limit
+    if (oversizedFiles.length) {
+      toast.error('Please upload videos smaller than 100MB each')
+      event.target.value = ''
+      return
+    }
+
+    setIsUploadingVideos(true)
+    try {
+      const uploadedVideos = await Promise.all(files.map(file => readFileAsDataUrl(file)))
+      appendVideos(uploadedVideos)
+      toast.success(`${uploadedVideos.length} video${uploadedVideos.length > 1 ? 's' : ''} uploaded from laptop`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to upload selected videos'
+      toast.error(message)
+    } finally {
+      setIsUploadingVideos(false)
+      event.target.value = ''
+    }
+  }
+
+  const removeVideo = (idx: number) => {
+    setForm(f => ({ ...f, videos: f.videos?.filter((_, i) => i !== idx) }))
+  }
+
+  const getVideoThumbnail = (url: string) => {
+    // Extract video ID from YouTube URL
+    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+    if (youtubeMatch?.[1]) {
+      return `https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`
+    }
+    // For other video types, return a placeholder
+    return undefined
   }
 
   const addTag = () => {
@@ -417,6 +520,90 @@ export default function ProductFormPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Videos */}
+            <div className="card p-5 space-y-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Product Videos</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={videoUrl}
+                    onChange={e => setVideoUrl(e.target.value)}
+                    className="input-field"
+                    placeholder="Video URL (YouTube, Vimeo, or direct video link)"
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addVideo())}
+                  />
+                  <button type="button" onClick={addVideo} className="btn-primary flex-shrink-0" title="Add this URL">
+                    <PlusIcon className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <textarea
+                  value={bulkVideoUrls}
+                  onChange={e => setBulkVideoUrls(e.target.value)}
+                  className="input-field resize-none"
+                  rows={3}
+                  placeholder="Paste multiple video URLs (one per line or comma-separated)"
+                />
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={addBulkVideoUrls} className="btn-secondary text-sm">
+                    Add Multiple URLs
+                  </button>
+                  <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2">
+                    <ArrowUpTrayIcon className="w-4 h-4" />
+                    {isUploadingVideos ? 'Uploading...' : 'Upload From Laptop'}
+                    <input
+                      type="file"
+                      accept="video/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleLaptopVideoUpload}
+                      disabled={isUploadingVideos}
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Max 100MB per video. Supports MP4, WebM, etc.</p>
+                </div>
+              </div>
+              {form.videos?.length ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {form.videos.map((video, i) => {
+                    const thumbnail = getVideoThumbnail(video)
+                    const isYoutube = video.includes('youtube.com') || video.includes('youtu.be')
+                    
+                    return (
+                      <div key={i} className="relative group aspect-square">
+                        {thumbnail ? (
+                          <img src={thumbnail} className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-600" alt={`Video ${i + 1}`} />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                            <FilmIcon className="w-8 h-8 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <PlayIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeVideo(i)}
+                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <XMarkIcon className="w-3 h-3" />
+                        </button>
+                        <span className="absolute bottom-1 left-1 text-[9px] bg-primary-600 text-white px-1 py-0.5 rounded truncate max-w-[calc(100%-8px)]" title={isYoutube ? 'YouTube' : 'Video'}>
+                          {isYoutube ? 'YouTube' : 'Video'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
+                  <FilmIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Add video URLs or upload from laptop</p>
+                </div>
+              )}
             </div>
 
             {/* Tags */}
