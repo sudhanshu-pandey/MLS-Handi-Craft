@@ -79,6 +79,27 @@ const FEATURE_NAME_ALIASES: Record<string, string> = {
 const normalizeName = (value: string) => value.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '')
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 
+const buildFallbackGeoJson = (): IndiaFeatureCollection => {
+  const delta = 0.55
+  return {
+    type: 'FeatureCollection',
+    features: INDIA_STATES.map(state => ({
+      type: 'Feature',
+      properties: { NAME_1: state.name },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [state.lng - delta, state.lat - delta],
+          [state.lng + delta, state.lat - delta],
+          [state.lng + delta, state.lat + delta],
+          [state.lng - delta, state.lat + delta],
+          [state.lng - delta, state.lat - delta],
+        ]],
+      },
+    })),
+  }
+}
+
 export default function GeographicSales({ data = [], isLoading = false, mode = 'dark' }: GeographicSalesProps) {
   const [hoveredStateCode, setHoveredStateCode] = useState<string | null>(null)
   const [pinnedStateCode, setPinnedStateCode] = useState<string | null>(null)
@@ -105,7 +126,9 @@ export default function GeographicSales({ data = [], isLoading = false, mode = '
           return
         }
 
-        setGeoJsonError('Unable to load India map boundaries.')
+        // Graceful fallback: render a simplified state grid using known centroids.
+        setGeoJson(buildFallbackGeoJson())
+        setGeoJsonError('Loaded simplified map view (boundary file unavailable).')
       }
     }
 
@@ -395,6 +418,12 @@ export default function GeographicSales({ data = [], isLoading = false, mode = '
           )}
         </div>
       </div>
+
+      {geoJsonError && (
+        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+          {geoJsonError}
+        </div>
+      )}
 
       <div className="rounded-3xl border border-gray-200 bg-[#f2f3f2] p-3 dark:border-slate-700 dark:bg-slate-950">
         <div className="flex justify-center overflow-x-auto">

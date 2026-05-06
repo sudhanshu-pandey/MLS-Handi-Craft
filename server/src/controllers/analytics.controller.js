@@ -29,6 +29,81 @@ const percentChange = (current, previous) => {
   return Number((((current - previous) / previous) * 100).toFixed(2));
 };
 
+const STATE_CODE_MAP = {
+  jammukashmir: "JK",
+  jammuandkashmir: "JK",
+  himachalpradesh: "HP",
+  punjab: "PB",
+  haryana: "HR",
+  uttarpradesh: "UP",
+  uttarakhand: "UT",
+  delhi: "DL",
+  bihar: "BR",
+  jharkhand: "JH",
+  westbengal: "WB",
+  odisha: "OD",
+  orissa: "OD",
+  madhyapradesh: "MP",
+  chhattisgarh: "CG",
+  rajasthan: "RJ",
+  gujarat: "GJ",
+  maharashtra: "MH",
+  goa: "GA",
+  karnataka: "KA",
+  telangana: "TG",
+  andhrapradesh: "AP",
+  tamilnadu: "TN",
+  kerala: "KL",
+  assam: "AS",
+  meghalaya: "ML",
+  manipur: "MN",
+  mizoram: "MZ",
+  nagaland: "NL",
+  tripura: "TR",
+  arunachalpradesh: "AR",
+  sikkim: "SK",
+};
+
+const normalizeStateName = (value = "") => String(value).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]/g, "");
+
+const prettifyStateName = (value = "") => {
+  const compact = String(value).replace(/[^a-zA-Z\s]/g, " ").trim();
+  if (!compact) return "Unknown";
+  return compact
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const aggregateStateMetrics = (orders) => {
+  const stateMap = new Map();
+
+  for (const order of orders) {
+    const rawState = order?.address?.state || "Unknown";
+    const normalized = normalizeStateName(rawState);
+    const stateKey = normalized || "unknown";
+    const stateCode = STATE_CODE_MAP[stateKey] || "UN";
+    const stateName = stateCode === "UN" ? prettifyStateName(rawState) : prettifyStateName(rawState);
+
+    if (!stateMap.has(stateKey)) {
+      stateMap.set(stateKey, {
+        state: stateName,
+        code: stateCode,
+        purchases: 0,
+        revenue: 0,
+        customerSet: new Set(),
+      });
+    }
+
+    const row = stateMap.get(stateKey);
+    row.purchases += 1;
+    row.revenue += order.total || 0;
+    if (order.user) row.customerSet.add(String(order.user));
+  }
+
+  return stateMap;
+};
+
 const getKPIs = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -220,8 +295,102 @@ const getCategoryRevenue = async (req, res) => {
   }
 };
 
+const getStateWiseSales = async (req, res) => {
+  try {
+    const days = clampNumber(req.query.days, 7, 365, 30);
+    const { start, end } = getDateRange(req.query.startDate, req.query.endDate, days);
+
+    const durationMs = end.getTime() - start.getTime();
+    const previousEnd = new Date(start.getTime() - 1);
+    const previousStart = new Date(previousEnd.getTime() - durationMs);
+
+    const [currentOrders, previousOrders] = await Promise.all([
+      Order.find({ createdAt: { $gte: start, $lte: end } })
+        .select("total address.state user paymentMethod")
+        .lean(),
+      Order.find({ createdAt: { $gte: previousStart, $lte: previousEnd } })
+        .select("total address.state user")
+        .lean(),
+    ]);
+
+    const currentMap = aggregateStateMetrics(currentOrders);
+    const previousMap = aggregateStateMetrics(previousOrders);
+
+    const data = Array.from(currentMap.entries())
+      .map(([stateKey, row]) => {
+        const prev = previousMap.get(stateKey);
+        const previousRevenue = prev ? prev.revenue : 0;
+        const previousPurchases = prev ? prev.purchases : 0;
+
+        return {
+          state: row.state,
+          code: row.code,
+          purchases: row.purchases,
+          revenue: Math.round(row.revenue),
+          customers: row.customerSet.size,
+          revenue_change: percentChange(row.revenue, previousRevenue),
+          purchases_change: percentChange(row.purchases, previousPurchases),
+        };
+      })
+      .sort((a, b) => b.purchases - a.purchases);
+
+    const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+    const totalPurchases = data.reduce((sum, item) => sum + item.purchases, 0);
+    const globalCustomerSet = new Set();
+    currentOrders.forEach((order) => {
+      if (order.user) globalCustomerSet.add(String(order.user));
+    });
+
+    const prevRevenue = previousOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const prevPurchases = previousOrders.length;
+
+    const paymentMap = new Map();
+    currentOrders.forEach((order) => {
+      const method = String(order.paymentMethod || "unknown").toLowerCase();
+      if (!paymentMap.has(method)) {
+        paymentMap.set(method, { method, orders: 0, revenue: 0 });
+      }
+      const item = paymentMap.get(method);
+      item.orders += 1;
+      item.revenue += order.total || 0;
+    });
+
+    const paymentMix = Array.from(paymentMap.values())
+      .map((item) => ({
+        method: item.method,
+        orders: item.orders,
+        revenue: Math.round(item.revenue),
+        percentage: totalPurchases > 0 ? Number(((item.orders / totalPurchases) * 100).toFixed(2)) : 0,
+      }))
+      .sort((a, b) => b.orders - a.orders);
+
+    res.json({
+      data,
+      summary: {
+        periodDays: days,
+        from: start.toISOString(),
+        to: end.toISOString(),
+        totalPurchases,
+        totalRevenue,
+        totalCustomers: globalCustomerSet.size,
+        activeStates: data.length,
+        revenueChange: percentChange(totalRevenue, prevRevenue),
+        purchasesChange: percentChange(totalPurchases, prevPurchases),
+        paymentMix,
+        topState: data[0] || null,
+      },
+    });
+  } catch (error) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Failed to fetch state-wise sales analytics",
+      error: error.message,
+    });
+  }
+};
+
 export default {
   getKPIs,
   getRevenueTrend,
   getCategoryRevenue,
+  getStateWiseSales,
 };
