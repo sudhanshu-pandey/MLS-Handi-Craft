@@ -80,11 +80,20 @@ class RazorpayService {
         return;
       }
 
+      // Create wrapper handler that calls the user's handler first, then resolves
+      const userHandler = options.handler;
+      const wrappedHandler = (response: any) => {
+        // Call user's handler if provided
+        if (userHandler && typeof userHandler === 'function') {
+          userHandler(response);
+        }
+        // Resolve the promise
+        resolve(response);
+      };
+
       const checkout = new razorpay({
         ...options,
-        handler: (response: any) => {
-          resolve(response);
-        },
+        handler: wrappedHandler,
         modal: {
           ondismiss: () => {
             reject(new Error('Payment declined. Please try again.'));

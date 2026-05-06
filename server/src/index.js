@@ -22,6 +22,7 @@ import pincodeRouter from "./routes/pincode.route.js";
 import analyticsRouter from "./routes/analytics.route.js";
 import uploadRouter from "./routes/upload.route.js";
 import otpMonitoringRouter from "./routes/otp-monitoring.route.js";
+import donationRouter from "./routes/donation.route.js";
 
 dotenv.config();
 
@@ -76,6 +77,7 @@ app.use("/api/pincode", pincodeRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/otp-monitoring", otpMonitoringRouter);
+app.use("/api/donations", donationRouter);
 
 // Server
 const PORT = process.env.PORT || 5000;

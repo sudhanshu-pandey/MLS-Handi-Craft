@@ -1,11 +1,12 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
-import { FiShield, FiUsers, FiGift, FiCreditCard, FiHeart } from 'react-icons/fi'
-import { MdOutlineVolunteerActivism, MdEmail } from 'react-icons/md'
-import { RiBankCardLine, RiBankLine, RiQrCodeLine } from 'react-icons/ri'
+import { FiShield, FiUsers, FiGift, FiHeart } from 'react-icons/fi'
+import { MdOutlineVolunteerActivism } from 'react-icons/md'
+import { useToast } from '../context/ToastContext'
+import razorpayService from '../services/razorpay.service'
+import donationService from '../services/donation.service'
 import './Donate.css'
 
 type DonationFrequency = 'one-time' | 'monthly'
-type PaymentMethod = 'upi' | 'card' | 'netbanking'
 
 type DonationForm = {
   name: string
@@ -83,11 +84,12 @@ const TESTIMONIALS = [
 ]
 
 const Donate = () => {
+  const { showToast } = useToast()
   const [donationFrequency, setDonationFrequency] = useState<DonationFrequency>('one-time')
   const [selectedAmount, setSelectedAmount] = useState<number | 'custom'>(500)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('upi')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
+  const [isSuccessful, setIsSuccessful] = useState(false)
   const [form, setForm] = useState<DonationForm>({
     name: '',
     email: '',
@@ -131,7 +133,7 @@ const Donate = () => {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleDonateSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleDonateSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const normalizedAmount = Number(form.amount)
@@ -140,32 +142,136 @@ const Donate = () => {
 
     if (!isNameValid || !isEmailValid || normalizedAmount <= 0) {
       setSubmitMessage('Please provide a valid name, email, and donation amount.')
+      showToast('Please provide a valid name, email, and donation amount.', 'error')
       return
     }
 
     setIsSubmitting(true)
     setSubmitMessage('')
 
-    const donorPayload = {
-      donorName: form.name,
-      donorEmail: form.email,
-      amount: normalizedAmount,
-      donationFrequency,
-      paymentMethod,
-      inMemory: form.inMemory,
-      memoryName: form.memoryName,
-      wantsReceipt: form.wantsReceipt,
-      message: form.message,
-    }
+    try {
+      // Step 1: Create donation order on backend
+      console.log('Step 1: Creating donation order...', { amount: normalizedAmount, name: form.name, email: form.email })
+      
+      const orderResponse = await donationService.createDonationOrder({
+        amount: normalizedAmount,
+        donorName: form.name,
+        donorEmail: form.email,
+        message: form.message,
+      })
 
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('donorInfo', JSON.stringify(donorPayload))
-    }
+      if (!orderResponse.success || !orderResponse.data) {
+        showToast('Failed to initiate donation. Please try again.', 'error')
+        setIsSubmitting(false)
+        return
+      }
 
-    window.setTimeout(() => {
+      const { razorpayOrderId } = orderResponse.data
+      console.log('Step 2: Order created successfully. Order ID:', razorpayOrderId)
+
+      // Step 3: Load Razorpay script
+      console.log('Step 3: Loading Razorpay script...')
+      await razorpayService.loadRazorpayScript()
+      console.log('Step 4: Razorpay script loaded')
+
+      // Step 5: Get Razorpay Key from environment or use fallback
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_K7jGjlPd8u8F7h'
+      console.log('Step 5: Using Razorpay Key ID:', razorpayKeyId)
+
+      // Step 6: Define payment success handler
+      const handlePaymentSuccess = async (paymentData: any) => {
+        try {
+          console.log('Step 6: Payment successful. Verifying with backend...')
+
+          // Step 7: Verify payment on backend
+          const verifyResponse = await donationService.verifyDonationPayment({
+            razorpayPaymentId: paymentData.razorpay_payment_id,
+            razorpayOrderId: paymentData.razorpay_order_id,
+            razorpaySignature: paymentData.razorpay_signature,
+            donorName: form.name,
+            donorEmail: form.email,
+            amount: normalizedAmount,
+            message: form.message,
+            inMemory: form.inMemory,
+            memoryName: form.memoryName,
+            wantsReceipt: form.wantsReceipt,
+          })
+
+          console.log('Step 7: Payment verification response:', verifyResponse)
+
+          if (!verifyResponse.success) {
+            showToast('Payment verification failed. Please contact support.', 'error')
+            setIsSubmitting(false)
+            return
+          }
+
+          // Step 8: Success!
+          console.log('Step 8: Donation completed successfully!')
+          
+          // Show success toast
+          showToast('🎉 Thank you for your generous donation! Your support means a lot to us. A receipt will be sent to your email.', 'success')
+          
+          // Set success state to show thank you message
+          setIsSuccessful(true)
+          setSubmitMessage('Thank you for your generous donation! 🎉\n\nA receipt has been sent to ' + form.email)
+          
+          // Reset form and states after a delay to allow user to see the message
+          setTimeout(() => {
+            setForm({
+              name: '',
+              email: '',
+              amount: '500',
+              message: '',
+              inMemory: false,
+              memoryName: '',
+              wantsReceipt: true,
+            })
+            setSelectedAmount(500)
+            setIsSubmitting(false)
+            setSubmitMessage('')
+            setIsSuccessful(false)
+          }, 3000)
+          
+          // Reset states immediately
+          setIsSubmitting(false)
+        } catch (error: any) {
+          console.error('Payment verification error:', error)
+          showToast('Payment completed but verification failed. Please contact support with your payment ID.', 'error')
+          setIsSubmitting(false)
+        }
+      }
+
+      // Step 9: Open Razorpay checkout
+      console.log('Step 9: Opening Razorpay checkout modal...')
+      try {
+        await razorpayService.openCheckout({
+          key: razorpayKeyId,
+          amount: normalizedAmount * 100, // Razorpay accepts amount in paise
+          currency: 'INR',
+          name: 'Handi-Craft',
+          description: `Donation of ₹${normalizedAmount}`,
+          order_id: razorpayOrderId,
+          prefill: {
+            name: form.name,
+            email: form.email,
+          },
+          handler: handlePaymentSuccess,
+          modal: {
+            ondismiss: () => {
+              console.log('Payment modal closed by user')
+              setIsSubmitting(false)
+            },
+          },
+        })
+      } catch (checkoutError: any) {
+        console.log('Payment flow ended:', checkoutError.message)
+        setIsSubmitting(false)
+      }
+    } catch (error: any) {
+      console.error('Donation submission error:', error)
+      showToast('An error occurred while processing your donation. Please try again.', 'error')
       setIsSubmitting(false)
-      setSubmitMessage('Thank you for your support! This is a secure mock payment flow and your receipt will be emailed shortly.')
-    }, 600)
+    }
   }
 
   const scrollToForm = () => {
@@ -330,53 +436,19 @@ const Donate = () => {
                 Send me a donation receipt by email
               </label>
 
-              <div className="paymentSection">
-                <h3>Payment Method</h3>
-                <div className="paymentMethods" role="radiogroup" aria-label="Payment methods">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={paymentMethod === 'upi'}
-                    className={paymentMethod === 'upi' ? 'paymentMethod paymentMethodActive' : 'paymentMethod'}
-                    onClick={() => setPaymentMethod('upi')}
-                  >
-                    <RiQrCodeLine aria-hidden="true" />
-                    UPI
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={paymentMethod === 'card'}
-                    className={paymentMethod === 'card' ? 'paymentMethod paymentMethodActive' : 'paymentMethod'}
-                    onClick={() => setPaymentMethod('card')}
-                  >
-                    <RiBankCardLine aria-hidden="true" />
-                    Credit/Debit Card
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={paymentMethod === 'netbanking'}
-                    className={paymentMethod === 'netbanking' ? 'paymentMethod paymentMethodActive' : 'paymentMethod'}
-                    onClick={() => setPaymentMethod('netbanking')}
-                  >
-                    <RiBankLine aria-hidden="true" />
-                    Net Banking
-                  </button>
-                </div>
-
-                <div className="gatewayInfo" aria-label="Supported gateways">
-                  <span><FiCreditCard aria-hidden="true" /> Razorpay ready</span>
-                  <span><MdEmail aria-hidden="true" /> Stripe compatible</span>
-                  <span><FiShield aria-hidden="true" /> Secure payment flow</span>
-                </div>
-              </div>
-
-              <button type="submit" className="donatePrimaryButton" disabled={isSubmitting}>
-                {isSubmitting ? 'Processing...' : 'Donate Now'}
+              <button type="submit" className="donatePrimaryButton" disabled={isSubmitting || isSuccessful}>
+                {isSuccessful ? '✅ Donation Complete!' : isSubmitting ? 'Processing...' : 'Donate Now'}
               </button>
 
-              {submitMessage ? <p className="submitMessage">{submitMessage}</p> : null}
+              {submitMessage ? <p className="submitMessage" style={{
+                color: isSuccessful ? '#27ae60' : '#e74c3c',
+                backgroundColor: isSuccessful ? '#d5f4e6' : '#fadbd8',
+                padding: '12px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                fontWeight: '500',
+                whiteSpace: 'pre-wrap',
+              }}>{submitMessage}</p> : null}
             </form>
           </div>
 
