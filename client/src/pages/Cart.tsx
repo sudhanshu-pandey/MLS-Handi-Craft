@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store/hooks'
 import { addItem as addItemToCart, updateQuantity, removeItem, type CartItem } from '../store/slices/cartSlice'
-import { applyCoupon, removeCoupon } from '../store/slices/couponSlice'
 import { addItem as addToWishlist, removeItem as removeFromWishlist } from '../store/slices/wishlistSlice'
 import useProducts from '../hooks/useProducts'
 import { useAuth } from '../context/AuthContext'
@@ -10,7 +9,6 @@ import { useToast } from '../context/ToastContext'
 import api from '../services/api'
 import LoginModal from '../components/LoginModal/LoginModal'
 import { formatCurrency, sumCartValue, sumOriginalCartValue, getStockCount } from '../utils/commerce'
-import { verifyCoupon } from '../api/coupon.api'
 import styles from './commerce.module.css'
 import './Cart.css'
 
@@ -18,14 +16,10 @@ const Cart = () => {
   const dispatch = useAppDispatch()
   const items = useAppSelector((state) => state.cart.items)
   const wishlistItems = useAppSelector((state) => state.wishlist.items)
-  const reduxCoupon = useAppSelector((state) => state.coupon)
   const { allProducts, loadProducts } = useProducts()
   const { isLoggedIn, login } = useAuth()
   const { showToast } = useToast()
   const navigate = useNavigate()
-  const [couponCode, setCouponCode] = useState('')
-  const [couponError, setCouponError] = useState('')
-  const [couponLoading, setCouponLoading] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   // Load products on mount to populate cart
@@ -111,44 +105,8 @@ const Cart = () => {
   const subtotal = sumCartValue(cartItems)
   const originalSubtotal = sumOriginalCartValue(cartItems)
   const discount = Math.max(0, originalSubtotal - subtotal)
-  const couponDiscount = reduxCoupon.code ? reduxCoupon.discountAmount : 0
   const deliveryFee = subtotal > 2499 || subtotal === 0 ? 0 : 49
-  const total = subtotal - couponDiscount + deliveryFee
-
-  const handleApplyCoupon = async () => {
-    const code = couponCode.trim().toUpperCase()
-    if (!code) {
-      setCouponError('Enter a coupon code')
-      return
-    }
-
-    setCouponLoading(true)
-    setCouponError('')
-
-    try {
-      // Verify coupon from backend
-      const response = await verifyCoupon(code, subtotal)
-
-      if (!response.success) {
-        setCouponError(response.message)
-        dispatch(removeCoupon())
-        return
-      }
-
-      // Apply coupon with discount details from backend
-      dispatch(applyCoupon({
-        code: response.data?.code || code,
-        discountPct: response.data?.discountValue || 0,
-        discountAmount: response.data?.discountAmount || 0,
-      }))
-      setCouponCode('')
-    } catch (error) {
-      setCouponError('Failed to apply coupon. Please try again.')
-      dispatch(removeCoupon())
-    } finally {
-      setCouponLoading(false)
-    }
-  }
+  const total = subtotal + deliveryFee
 
   // Handle remove from cart - syncs with database for logged-in users
   const handleRemoveFromCart = async (productId: string | number) => {
@@ -384,47 +342,12 @@ const Cart = () => {
             {discount > 0 && (
               <div className={styles.row}><span>Discount</span><span style={{ color: 'var(--success-color)' }}>-{formatCurrency(discount)}</span></div>
             )}
-            {couponDiscount > 0 && (
-              <div className={styles.row}><span>Coupon ({reduxCoupon?.code})</span><span style={{ color: 'var(--success-color)' }}>-{formatCurrency(couponDiscount)}</span></div>
-            )}
             <div className={styles.row}><span>Delivery fee</span><span>{deliveryFee === 0 ? <span className={styles.stockOk}>Free</span> : formatCurrency(deliveryFee)}</span></div>
             <hr className={styles.divider} />
             <div className={styles.row} style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '1.05rem' }}>
               <span>Total</span>
               <span data-testid="cart-total">{formatCurrency(total)}</span>
             </div>
-
-            {/* Coupon */}
-            {reduxCoupon.code ? (
-              <div className="couponAppliedBadge">
-                <span>🎉 {reduxCoupon.code} applied – {reduxCoupon.discountPct}% off</span>
-                <button type="button" className="couponCloseButton" onClick={() => dispatch(removeCoupon())}>×</button>
-              </div>
-            ) : (
-              <div className="couponInputSection">
-                <div className={styles.couponRow}>
-                  <input
-                    className={styles.couponInput}
-                    placeholder="Coupon code"
-                    value={couponCode}
-                    onChange={(event) => { setCouponCode(event.target.value); setCouponError('') }}
-                    onKeyDown={(event) => event.key === 'Enter' && !couponLoading && handleApplyCoupon()}
-                    disabled={couponLoading}
-                    data-testid="coupon-input"
-                  />
-                  <button 
-                    type="button" 
-                    className={styles.secondaryBtn} 
-                    onClick={handleApplyCoupon} 
-                    disabled={couponLoading}
-                    data-testid="apply-coupon-btn"
-                  >
-                    {couponLoading ? 'Verifying...' : 'Apply'}
-                  </button>
-                </div>
-                {couponError && <p className="couponError">{couponError}</p>}
-              </div>
-            )}
 
             <button
               type="button"

@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema({ // Numeric ID for frontend compatibi
   originalPrice: { type: Number },
   image: { type: String },
   images: [{ type: String }],
+  videos: [{ type: String }], // Array of video URLs (YouTube, Vimeo, or direct video URLs)
   category: { type: String, required: true },
   rating: { type: Number, default: 4.5, min: 0, max: 5 },
   reviewCount: { type: Number, default: 0 },

@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../store/hooks'
 import { addNewAddress, updateAddressAsync, deleteAddressAsync, fetchAddresses } from '../store/slices/addressSlice'
+import { applyCoupon, removeCoupon } from '../store/slices/couponSlice'
 import { useAuth } from '../context/AuthContext'
 import useProducts from '../hooks/useProducts'
 import LoginModal from '../components/LoginModal/LoginModal'
 import AddressForm from '../components/AddressForm/AddressForm'
 import { formatCurrency, sumCartValue, sumOriginalCartValue } from '../utils/commerce'
+import { verifyCoupon } from '../api/coupon.api'
 import api from '../services/api'
 import styles from './commerce.module.css'
 import './Checkout.css'
@@ -27,6 +29,12 @@ const Checkout = () => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponError, setCouponError] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [donationAmount, setDonationAmount] = useState(0)
+  const [showDonationModal, setShowDonationModal] = useState(false)
+  const [customDonation, setCustomDonation] = useState('')
 
   // Load products on mount
   useEffect(() => {
@@ -64,7 +72,42 @@ const Checkout = () => {
   const discount = Math.max(0, originalTotal - subtotal)
   const couponDiscount = reduxCoupon.code ? reduxCoupon.discountAmount : 0
   const deliveryFee = subtotal > 2499 || subtotal === 0 ? 0 : 49
-  const finalTotal = subtotal - couponDiscount + deliveryFee
+  const finalTotal = subtotal - couponDiscount + deliveryFee + donationAmount
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase()
+    if (!code) {
+      setCouponError('Enter a coupon code')
+      return
+    }
+
+    setCouponLoading(true)
+    setCouponError('')
+
+    try {
+      // Verify coupon from backend
+      const response = await verifyCoupon(code, subtotal)
+
+      if (!response.success) {
+        setCouponError(response.message)
+        dispatch(removeCoupon())
+        return
+      }
+
+      // Apply coupon with discount details from backend
+      dispatch(applyCoupon({
+        code: response.data?.code || code,
+        discountPct: response.data?.discountValue || 0,
+        discountAmount: response.data?.discountAmount || 0,
+      }))
+      setCouponCode('')
+    } catch (error) {
+      setCouponError('Failed to apply coupon. Please try again.')
+      dispatch(removeCoupon())
+    } finally {
+      setCouponLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -134,6 +177,7 @@ const Checkout = () => {
           deliveryFee: deliveryFee,
           couponCode: reduxCoupon.code || null,
           couponDiscount: couponDiscount,
+          donationAmount: donationAmount,
           paymentMethod: 'razorpay',
           paymentStatus: 'pending',
           estimatedDelivery: estimated.toISOString(),
@@ -329,6 +373,85 @@ const Checkout = () => {
             )}
           </div>
 
+          {/* Coupon Section */}
+          <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #e5e7eb' }}>
+            {reduxCoupon.code ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#e8f5e9', padding: '8px 10px', borderRadius: '6px', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#2e7d32' }}>🎉 {reduxCoupon.code} applied – {reduxCoupon.discountPct}% off</span>
+                <button type="button" onClick={() => dispatch(removeCoupon())} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#2e7d32' }}>×</button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="Coupon code"
+                    value={couponCode}
+                    onChange={(event) => { setCouponCode(event.target.value); setCouponError('') }}
+                    onKeyDown={(event) => event.key === 'Enter' && !couponLoading && handleApplyCoupon()}
+                    disabled={couponLoading}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: 'var(--primary)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      opacity: couponLoading ? 0.6 : 1
+                    }}
+                  >
+                    {couponLoading ? 'Verifying...' : 'Apply'}
+                  </button>
+                </div>
+                {couponError && <p style={{ color: '#ef4444', fontSize: '12px', margin: 0 }}>{couponError}</p>}
+              </div>
+            )}
+          </div>
+
+          {/* Donation Section */}
+          <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #e5e7eb' }}>
+            <button
+              type="button"
+              onClick={() => setShowDonationModal(true)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px dashed var(--primary)',
+                backgroundColor: 'rgba(var(--primary-rgb), 0.02)',
+                color: 'var(--primary)',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '13px',
+                transition: 'all 0.2s'
+              }}
+            >
+              🤝 Add Donation
+            </button>
+            {donationAmount > 0 && (
+              <div style={{ marginTop: 8, padding: '8px 10px', backgroundColor: '#e8f5e9', borderRadius: '6px', textAlign: 'center' }}>
+                <p style={{ margin: 0, color: '#2e7d32', fontWeight: 600, fontSize: '13px' }}>
+                  ✓ {formatCurrency(donationAmount)} will be donated
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Grand Total */}
           <div className={styles.row} style={{ color: 'var(--text-dark)', fontWeight: 800, fontSize: 16, marginBottom: 12 }}>
             <span>Grand total</span>
@@ -354,6 +477,183 @@ const Checkout = () => {
           </button>
         </aside>
       </div>
+
+      {/* Donation Modal */}
+      {showDonationModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Support Handcrafts 🤝</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDonationModal(false)
+                  setCustomDonation('')
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+              Your donation helps support artisans and sustain traditional crafts.
+            </p>
+
+            {/* Preset Amounts */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+              {[100, 200, 500, 1000].map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  onClick={() => {
+                    setDonationAmount(amount)
+                    setCustomDonation('')
+                    setShowDonationModal(false)
+                  }}
+                  style={{
+                    padding: '12px',
+                    border: '2px solid #ddd',
+                    borderRadius: '8px',
+                    backgroundColor: '#f9f9f9',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'var(--text-dark)',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary)'
+                    e.currentTarget.style.backgroundColor = 'rgba(var(--primary-rgb), 0.05)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#ddd'
+                    e.currentTarget.style.backgroundColor = '#f9f9f9'
+                  }}
+                >
+                  ₹{amount}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Amount */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                Custom Amount
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="number"
+                  value={customDonation}
+                  onChange={(e) => setCustomDonation(e.target.value)}
+                  placeholder="Enter amount"
+                  min="1"
+                  style={{
+                    flex: 1,
+                    padding: '10px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#ddd'}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const amount = parseInt(customDonation)
+                    if (amount > 0) {
+                      setDonationAmount(amount)
+                      setShowDonationModal(false)
+                      setCustomDonation('')
+                    }
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: 'var(--primary)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* No Donation Option */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowDonationModal(false)
+                setCustomDonation('')
+              }}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#f5f5f5',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#666',
+                fontWeight: 500,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e8e8e8'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+            >
+              Maybe Later
+            </button>
+
+            {/* Current Donation Display */}
+            {donationAmount > 0 && (
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                backgroundColor: '#e8f5e9',
+                borderRadius: '6px',
+                textAlign: 'center'
+              }}>
+                <p style={{ margin: 0, color: '#2e7d32', fontWeight: 600 }}>
+                  ✓ {formatCurrency(donationAmount)} will be donated
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

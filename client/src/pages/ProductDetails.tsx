@@ -7,6 +7,7 @@ import { addItem as addToWishlist, removeItem as removeFromWishlist } from '../s
 import useProducts from '../hooks/useProducts'
 import useReviews from '../hooks/useReviews'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import api from '../services/api'
 import LoginModal from '../components/LoginModal/LoginModal'
 import {
   calculateDiscountPercent,
@@ -45,6 +46,41 @@ const productImages = (baseImage: string | undefined, additionalImages?: string[
   }
   
   return images;
+}
+
+const productVideos = (videos?: string[]) => {
+  if (!videos || videos.length === 0) return [];
+  return videos.filter(v => v);
+}
+
+// Helper function to convert video URLs to embeddable iframe URLs
+const getVideoEmbedUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // YouTube URLs
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    let videoId = '';
+    if (url.includes('youtube.com/watch?v=')) {
+      videoId = url.split('v=')[1]?.split('&')[0] || '';
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : '';
+  }
+  
+  // Vimeo URLs
+  if (url.includes('vimeo.com')) {
+    const videoId = url.split('/').filter(Boolean).pop()?.split('?')[0] || '';
+    return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1` : '';
+  }
+  
+  // Direct video file URLs (MP4, WebM, etc.)
+  if (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov') || url.endsWith('.avi')) {
+    return url;
+  }
+  
+  // Return as-is for other platforms
+  return url;
 }
 
 const ProductDetails = () => {
@@ -88,7 +124,6 @@ const ProductDetails = () => {
         if (!fetchedProduct) {
           fetchedProduct = getProductById(productId)
         }
-        
         setProduct(fetchedProduct)
         setLoading(false)
       } catch (error) {
@@ -128,6 +163,9 @@ const ProductDetails = () => {
   const [purchasedToast, setPurchasedToast] = useState('')
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [isImageFullscreen, setIsImageFullscreen] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(1)
   const [viewerCount, setViewerCount] = useState(() => {
     // Use numeric ID if valid, otherwise use string ID for viewer count generation
     const idForCount = !isNaN(numericId) && numericId > 0 ? numericId : productId
@@ -141,6 +179,7 @@ const ProductDetails = () => {
   // Use actual stock from product API if available, otherwise fallback to calculated value
   const stockCount = product?.stock !== undefined ? product.stock : getStockCount(!isNaN(numericId) && numericId > 0 ? numericId : productId)
   const images = product ? productImages(product.image, product.images) : []
+  const videos = product ? productVideos(product.videos) : []
 
   // State for delivery info
   const [deliveryInfo, setDeliveryInfo] = useState({
@@ -276,25 +315,32 @@ const ProductDetails = () => {
       return
     }
     
-    // If item already in cart, update the total quantity
-    // Otherwise, add it as a new item
-    if (cartQuantity > 0) {
-      // Item exists - update total quantity
-      dispatch(updateQuantity({ productId, quantity: totalQuantity }))
-      setToast(`✓ Updated to ${totalQuantity} in cart`)
-    } else {
-      // Item doesn't exist - add it
-      dispatch(addItem({ 
-        productId, 
-        quantity,
-        productName: product.name,
-        productPrice: product.price,
-        productImage: product.images?.[0] || product.image
-      }))
-      setToast(`✓ Added ${quantity} to cart`)
-    }
-    // Reset quantity for next add
-    setQuantity(1)
+    // Save to database
+    api.addToCart(productId, quantity)
+      .then(() => {
+        // If item already in cart, update the total quantity
+        // Otherwise, add it as a new item
+        if (cartQuantity > 0) {
+          // Item exists - update total quantity
+          dispatch(updateQuantity({ productId, quantity: totalQuantity }))
+          setToast(`✓ Updated to ${totalQuantity} in cart`)
+        } else {
+          // Item doesn't exist - add it
+          dispatch(addItem({ 
+            productId, 
+            quantity,
+            productName: product.name,
+            productPrice: product.price,
+            productImage: product.images?.[0] || product.image
+          }))
+          setToast(`✓ Added ${quantity} to cart`)
+        }
+        // Reset quantity for next add
+        setQuantity(1)
+      })
+      .catch((error: any) => {
+        setToast(`❌ Failed to add item: ${error.message}`)
+      })
   }
 
   const handleBuyNow = () => {
@@ -349,21 +395,28 @@ const ProductDetails = () => {
         return
       }
       
-      // If item already in cart, update the total quantity
-      if (cartQuantity > 0) {
-        dispatch(updateQuantity({ productId, quantity: totalQuantity }))
-        setToast(`✓ Updated to ${totalQuantity} in cart`)
-      } else {
-        dispatch(addItem({ 
-          productId, 
-          quantity,
-          productName: product.name,
-          productPrice: product.price,
-          productImage: product.images?.[0] || product.image
-        }))
-        setToast(`✓ Added ${quantity} to cart`)
-      }
-      setQuantity(1)
+      // Save to database
+      api.addToCart(productId, quantity)
+        .then(() => {
+          // If item already in cart, update the total quantity
+          if (cartQuantity > 0) {
+            dispatch(updateQuantity({ productId, quantity: totalQuantity }))
+            setToast(`✓ Updated to ${totalQuantity} in cart`)
+          } else {
+            dispatch(addItem({ 
+              productId, 
+              quantity,
+              productName: product.name,
+              productPrice: product.price,
+              productImage: product.images?.[0] || product.image
+            }))
+            setToast(`✓ Added ${quantity} to cart`)
+          }
+          setQuantity(1)
+        })
+        .catch((error: any) => {
+          setToast(`❌ Failed to add item: ${error.message}`)
+        })
       return
     }
     
@@ -373,14 +426,21 @@ const ProductDetails = () => {
       return
     }
     
-    dispatch(addItem({ 
-      productId, 
-      quantity,
-      productName: product.name,
-      productPrice: product.price,
-      productImage: product.images?.[0] || product.image
-    }))
-    navigate('/checkout')
+    // Save to database
+    api.addToCart(productId, quantity)
+      .then(() => {
+        dispatch(addItem({ 
+          productId, 
+          quantity,
+          productName: product.name,
+          productPrice: product.price,
+          productImage: product.images?.[0] || product.image
+        }))
+        navigate('/checkout')
+      })
+      .catch((error: any) => {
+        setToast(`❌ Failed to add item: ${error.message}`)
+      })
   }
 
   const handleLoginSuccess = (identifier: string, provider: 'mobile' | 'google' = 'mobile') => {
@@ -511,26 +571,411 @@ const ProductDetails = () => {
           <div className={styles.grid}>
             <section className={styles.card}>
               <div className={styles.gallery}>
-                <div className={styles.imageGrid}>
-                  {images.slice(0, 4).map((image, index) => (
+                {/* Main Image Display with Zoom (or Video) */}
+                <div 
+                  className={styles.mainImageContainer}
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '500px',
+                    overflow: 'hidden',
+                    borderRadius: '8px',
+                    backgroundColor: '#f5f5f5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}
+                  onMouseMove={(e) => {
+                    if (zoomLevel > 1 && selectedImageIndex < images.length) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const y = e.clientY - rect.top;
+                      const percentX = (x / rect.width) * 100;
+                      const percentY = (y / rect.height) * 100;
+                      e.currentTarget.style.backgroundPosition = `${percentX}% ${percentY}%`;
+                    }
+                  }}
+                  onClick={() => selectedImageIndex < images.length && setIsImageFullscreen(true)}
+                >
+                  {/* Show image or video based on selection */}
+                  {selectedImageIndex < images.length ? (
+                    // Image display
+                    <img
+                      src={images[selectedImageIndex]}
+                      alt={`${product.name} - main view`}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        transform: `scale(${zoomLevel})`,
+                        transition: 'transform 0.2s ease-out',
+                        cursor: zoomLevel > 1 ? 'grab' : 'zoom-in',
+                        pointerEvents: 'none'
+                      }}
+                      onMouseEnter={() => setZoomLevel(1.5)}
+                      onMouseLeave={() => setZoomLevel(1)}
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.src = 'https://via.placeholder.com/500x500?text=Product+Image';
+                      }}
+                      loading="lazy"
+                    />
+                  ) : (
+                    // Video display
                     <div
-                      key={`${image}-${index}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#000'
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={getVideoEmbedUrl(videos[selectedImageIndex - images.length])}
+                        title={`${product.name} video`}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ border: 'none' }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumbnail Gallery - Horizontally Scrollable */}
+                <div 
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    overflowX: 'auto',
+                    overflowY: 'hidden',
+                    paddingBottom: '8px',
+                    scrollBehavior: 'smooth',
+                    alignItems: 'center'
+                  }}
+                >
+                  {/* All images */}
+                  {images.map((image, index) => (
+                    <div
+                      key={`img-${index}`}
                       className={styles.gridImage}
+                      onClick={() => setSelectedImageIndex(index)}
+                      style={{
+                        cursor: 'pointer',
+                        border: selectedImageIndex === index ? '3px solid var(--primary)' : '2px solid #e0e0e0',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                        width: '100px',
+                        minWidth: '100px',
+                        height: '100px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#f5f5f5',
+                        flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedImageIndex !== index) {
+                          e.currentTarget.style.borderColor = 'var(--primary)';
+                          e.currentTarget.style.opacity = '0.8';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedImageIndex !== index) {
+                          e.currentTarget.style.borderColor = '#e0e0e0';
+                          e.currentTarget.style.opacity = '1';
+                        }
+                      }}
                     >
                       <img 
                         src={image} 
                         alt={`${product.name} image ${index + 1}`} 
                         loading="lazy"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          objectFit: 'cover'
+                        }}
                         onError={(e) => {
                           const img = e.target as HTMLImageElement;
-                          img.src = 'https://via.placeholder.com/400x400?text=Product+Image';
+                          img.src = 'https://via.placeholder.com/100x100?text=Image';
                         }}
                       />
+                    </div>
+                  ))}
+
+                  {/* All videos */}
+                  {videos.map((video, videoIndex) => (
+                    <div
+                      key={`vid-${videoIndex}`}
+                      className={styles.gridImage}
+                      onClick={() => setSelectedImageIndex(images.length + videoIndex)}
+                      style={{
+                        cursor: 'pointer',
+                        border: selectedImageIndex === images.length + videoIndex ? '3px solid var(--primary)' : '2px solid #e0e0e0',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                        width: '100px',
+                        minWidth: '100px',
+                        height: '100px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#1a1a1a',
+                        flexShrink: 0,
+                        position: 'relative'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedImageIndex !== images.length + videoIndex) {
+                          e.currentTarget.style.borderColor = 'var(--primary)';
+                          e.currentTarget.style.opacity = '0.8';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedImageIndex !== images.length + videoIndex) {
+                          e.currentTarget.style.borderColor = '#e0e0e0';
+                          e.currentTarget.style.opacity = '1';
+                        }
+                      }}
+                    >
+                      {/* Small video preview - muted autoplay */}
+                      {video.endsWith('.mp4') || video.endsWith('.webm') || video.endsWith('.mov') || video.endsWith('.avi') ? (
+                        <video
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0
+                          }}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        >
+                          <source src={video} />
+                        </video>
+                      ) : (
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={getVideoEmbedUrl(video)}
+                          frameBorder="0"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            border: 'none'
+                          }}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             </section>
+
+            {/* Fullscreen Modal - Images and Videos */}
+            {isImageFullscreen && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                  cursor: selectedImageIndex < images.length ? 'zoom-out' : 'default'
+                }}
+                onClick={() => {
+                  setIsImageFullscreen(false);
+                  setZoomLevel(1);
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '90vw',
+                    height: '90vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Show image if selected index is in images array */}
+                  {selectedImageIndex < images.length ? (
+                    <img
+                      src={images[selectedImageIndex]}
+                      alt={`${product.name} - fullscreen`}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain'
+                      }}
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.src = 'https://via.placeholder.com/800x800?text=Product+Image';
+                      }}
+                    />
+                  ) : (
+                    /* Show video if selected index is in videos array */
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src={getVideoEmbedUrl(videos[selectedImageIndex - images.length])}
+                      title={`${product.name} video`}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{ border: 'none' }}
+                    />
+                  )}
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => {
+                      setIsImageFullscreen(false);
+                      setZoomLevel(1);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '20px',
+                      right: '20px',
+                      background: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '40px',
+                      height: '40px',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.2s',
+                      zIndex: 1001
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    ✕
+                  </button>
+
+                  {/* Navigation Arrows */}
+                  {(images.length + videos.length) > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const totalMedia = images.length + videos.length;
+                          setSelectedImageIndex((prev) => (prev === 0 ? totalMedia - 1 : prev - 1));
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: '20px',
+                          background: 'rgba(255, 255, 255, 0.8)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          fontSize: '20px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s',
+                          zIndex: 1001
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'white';
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        ❮
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const totalMedia = images.length + videos.length;
+                          setSelectedImageIndex((prev) => (prev === totalMedia - 1 ? 0 : prev + 1));
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: '20px',
+                          background: 'rgba(255, 255, 255, 0.8)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          fontSize: '20px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s',
+                          zIndex: 1001
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'white';
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        ❯
+                      </button>
+                    </>
+                  )}
+
+                  {/* Media Counter */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '20px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontSize: '14px',
+                      zIndex: 1001
+                    }}
+                  >
+                    {selectedImageIndex < images.length ? (
+                      <>📷 Image {selectedImageIndex + 1} / {images.length + videos.length}</>
+                    ) : (
+                      <>🎥 Video {selectedImageIndex - images.length + 1} / {images.length + videos.length}</>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <section className={styles.card}>
               <div className={styles.info}>
