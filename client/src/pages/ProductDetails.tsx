@@ -577,14 +577,15 @@ const ProductDetails = () => {
                   style={{
                     position: 'relative',
                     width: '100%',
-                    height: '500px',
+                    height: '650px',
                     overflow: 'hidden',
-                    borderRadius: '8px',
-                    backgroundColor: '#f5f5f5',
+                    borderRadius: '12px',
+                    backgroundColor: '#f8f8f8',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: '16px'
+                    marginBottom: '16px',
+                    border: '1px solid #e0e0e0'
                   }}
                   onMouseMove={(e) => {
                     if (zoomLevel > 1 && selectedImageIndex < images.length) {
@@ -617,7 +618,7 @@ const ProductDetails = () => {
                       onMouseLeave={() => setZoomLevel(1)}
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
-                        img.src = 'https://via.placeholder.com/500x500?text=Product+Image';
+                        img.src = 'https://via.placeholder.com/600x650?text=Product+Image';
                       }}
                       loading="lazy"
                     />
@@ -652,7 +653,7 @@ const ProductDetails = () => {
                 <div 
                   style={{
                     display: 'flex',
-                    gap: '8px',
+                    gap: '10px',
                     overflowX: 'auto',
                     overflowY: 'hidden',
                     paddingBottom: '8px',
@@ -669,28 +670,30 @@ const ProductDetails = () => {
                       style={{
                         cursor: 'pointer',
                         border: selectedImageIndex === index ? '3px solid var(--primary)' : '2px solid #e0e0e0',
-                        borderRadius: '8px',
+                        borderRadius: '10px',
                         overflow: 'hidden',
                         transition: 'all 0.2s ease',
-                        width: '100px',
-                        minWidth: '100px',
-                        height: '100px',
+                        width: '140px',
+                        minWidth: '140px',
+                        height: '140px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: '#f5f5f5',
+                        backgroundColor: '#f9f9f9',
                         flexShrink: 0
                       }}
                       onMouseEnter={(e) => {
                         if (selectedImageIndex !== index) {
                           e.currentTarget.style.borderColor = 'var(--primary)';
-                          e.currentTarget.style.opacity = '0.8';
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (selectedImageIndex !== index) {
                           e.currentTarget.style.borderColor = '#e0e0e0';
-                          e.currentTarget.style.opacity = '1';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
                         }
                       }}
                     >
@@ -723,9 +726,9 @@ const ProductDetails = () => {
                         borderRadius: '8px',
                         overflow: 'hidden',
                         transition: 'all 0.2s ease',
-                        width: '100px',
-                        minWidth: '100px',
-                        height: '100px',
+                        width: '140px',
+                        minWidth: '140px',
+                        height: '140px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -979,7 +982,33 @@ const ProductDetails = () => {
 
             <section className={styles.card}>
               <div className={styles.info}>
-                <h1 className={styles.title}>{product.name}</h1>
+                <h1 className={styles.title} style={{ fontSize: '2rem', fontWeight: '700', lineHeight: '1.4', marginBottom: '8px' }}>{product.name}</h1>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <p className={styles.rating} style={{ fontSize: '16px', margin: 0 }}>⭐ {product.rating ?? 4.6} ({product.reviews ?? 128} reviews)</p>
+                  {product.artisan?.region && (
+                    <span style={{ 
+                      fontSize: '13px', 
+                      color: '#666', 
+                      padding: '4px 12px', 
+                      backgroundColor: '#f0f0f0', 
+                      borderRadius: '20px',
+                      fontWeight: '500'
+                    }}>
+                      📍 {product.artisan.region}
+                    </span>
+                  )}
+                </div>
+
+                {/* Price aner */}
+                <div className={styles.priceRow} style={{ marginBottom: '16px' }}>
+                  <span className={styles.price} style={{ fontSize: '2.2rem', fontWeight: '800' }}>{formatCurrency(product.price)}</span>
+                  {product.originalPrice && (
+                    <span className={styles.strike} style={{ fontSize: '1.1rem' }}>{formatCurrency(product.originalPrice)}</span>
+                  )}
+                  {discount > 0 && <span className={styles.badge} style={{ fontSize: '14px', fontWeight: '600' }}>{discount}% OFF</span>}
+                  {product.sale && <span className={styles.badge}>Festival Offer</span>}
+                </div>
 
                 {/* Stock Status - Prominent Display */}
                 <div style={{
@@ -1018,19 +1047,6 @@ const ProductDetails = () => {
                       Hurry! Limited availability
                     </p>
                   )}
-                </div>
-
-                <div className={styles.priceRow}>
-                  <span className={styles.price}>{formatCurrency(product.price)}</span>
-                  {product.originalPrice && (
-                    <span className={styles.strike}>{formatCurrency(product.originalPrice)}</span>
-                  )}
-                  {discount > 0 && <span className={styles.badge}>{discount}% OFF</span>}
-                  {product.sale && <span className={styles.badge}>Festival Offer</span>}
-                </div>
-
-                <div className={styles.row}>
-                  <p className={styles.rating}>⭐ {product.rating ?? 4.6} ({product.reviews ?? 128} reviews)</p>
                 </div>
 
                 {cartQuantity > 0 && (
@@ -1161,13 +1177,38 @@ const ProductDetails = () => {
             <div className={`${styles.card} ${styles.panel}`}>
               {activeTab === 'description' && (
                 <>
-                  <p>{product.description ?? 'Premium artisan-crafted product designed for lasting elegance.'}</p>
+                  <div style={{
+                    fontSize: '16px',
+                    lineHeight: '1.8',
+                    color: 'var(--text-dark)',
+                    marginBottom: '24px',
+                    fontWeight: '400'
+                  }}>
+                    {product.description ? (
+                      <div
+                        style={{
+                          wordWrap: 'break-word',
+                          overflow: 'hidden',
+                          fontSize: '15px',
+                          lineHeight: '1.9',
+                          color: '#333'
+                        }}
+                        dangerouslySetInnerHTML={{ 
+                          __html: typeof product.description === 'string' 
+                            ? product.description.replace(/\n/g, '<br />') 
+                            : 'Premium artisan-crafted product designed for lasting elegance.'
+                        }}
+                      />
+                    ) : (
+                      <p>Premium artisan-crafted product designed for lasting elegance.</p>
+                    )}
+                  </div>
                   <div className={styles.expand}>
                     <button type="button" className={styles.expandHead}>
                       Material & Craft
                       <span>✓</span>
                     </button>
-                    <div className={styles.expandBody}>Handmade by rural artisans using traditional techniques.</div>
+                    <div className={styles.expandBody} style={{ fontSize: '15px', lineHeight: '1.8' }}>Handmade by rural artisans using traditional techniques.</div>
                   </div>
                 </>
               )}
@@ -1175,46 +1216,46 @@ const ProductDetails = () => {
               {activeTab === 'specifications' && (
                 <>
                   {product?.specifications ? (
-                    <>
+                    <div style={{ display: 'grid', gap: '16px' }}>
                       {product.specifications.dimension && (
                         <div className={styles.expand}>
                           <button type="button" className={styles.expandHead}>
-                            <span>Dimension</span>
+                            <span style={{ fontWeight: '600', fontSize: '15px' }}>📏 Dimensions</span>
                             <span>▾</span>
                           </button>
-                          <div className={styles.expandBody}>{product.specifications.dimension}</div>
+                          <div className={styles.expandBody} style={{ fontSize: '15px', color: '#555', fontWeight: '500' }}>{product.specifications.dimension}</div>
                         </div>
                       )}
                       {product.specifications.weight && (
                         <div className={styles.expand}>
                           <button type="button" className={styles.expandHead}>
-                            <span>Weight</span>
+                            <span style={{ fontWeight: '600', fontSize: '15px' }}>⚖️ Weight</span>
                             <span>▾</span>
                           </button>
-                          <div className={styles.expandBody}>{product.specifications.weight}</div>
+                          <div className={styles.expandBody} style={{ fontSize: '15px', color: '#555', fontWeight: '500' }}>{product.specifications.weight}</div>
                         </div>
                       )}
                       {product.specifications.category && (
                         <div className={styles.expand}>
                           <button type="button" className={styles.expandHead}>
-                            <span>Category</span>
+                            <span style={{ fontWeight: '600', fontSize: '15px' }}>🎨 Material</span>
                             <span>▾</span>
                           </button>
-                          <div className={styles.expandBody}>{product.specifications.category}</div>
+                          <div className={styles.expandBody} style={{ fontSize: '15px', color: '#555', fontWeight: '500' }}>{product.specifications.category}</div>
                         </div>
                       )}
                       {product.specifications.countryOfOrigin && (
                         <div className={styles.expand}>
                           <button type="button" className={styles.expandHead}>
-                            <span>Country of origin</span>
+                            <span style={{ fontWeight: '600', fontSize: '15px' }}>🌍 Origin</span>
                             <span>▾</span>
                           </button>
-                          <div className={styles.expandBody}>{product.specifications.countryOfOrigin}</div>
+                          <div className={styles.expandBody} style={{ fontSize: '15px', color: '#555', fontWeight: '500' }}>{product.specifications.countryOfOrigin}</div>
                         </div>
                       )}
-                    </>
+                    </div>
                   ) : (
-                    <p>No specifications available for this product.</p>
+                    <p style={{ fontSize: '15px', color: '#999' }}>No specifications available for this product.</p>
                   )}
                 </>
               )}

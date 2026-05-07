@@ -17,7 +17,7 @@
 .imageWrapper {
   position: relative;
   overflow: hidden;
-  height: 250px;
+  height: 350px;
   background-color: var(--bg-light-gray);
 }
 

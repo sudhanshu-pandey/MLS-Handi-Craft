@@ -112,13 +112,21 @@ const filterProducts = async (req, res) => {
 // Create product (admin only)
 const createProduct = async (req, res) => {
   try {
-    const { name, price, originalPrice, category, description, image, images, stock, artisan, artisanInfo, specifications, tags } = req.body;
+    const { name, price, originalPrice, category, description, image, images, videos, stock, artisan, artisanInfo, specifications, tags } = req.body;
     if (!name || !price || !category) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Name, price, and category are required' });
     }
     
     // Use first image from images array if no single image provided
     const mainImage = image || (images && images.length > 0 ? images[0] : null);
+    
+    // Normalize specifications to match schema (handle both frontend and backend field names)
+    const normalizedSpecs = specifications ? {
+      dimension: specifications.dimensions || specifications.dimension || '',
+      weight: specifications.weight || '',
+      category: specifications.material || specifications.category || '',
+      countryOfOrigin: specifications.origin || specifications.countryOfOrigin || '',
+    } : {};
     
     const product = new Product({
       name,
@@ -128,9 +136,10 @@ const createProduct = async (req, res) => {
       description,
       image: mainImage,
       images: images || [],
+      videos: videos || [],
       stock: stock || 50,
       artisanInfo: artisan || artisanInfo || {},
-      specifications: specifications || {},
+      specifications: normalizedSpecs,
       tags: tags || []
     });
     await product.save();
@@ -144,13 +153,27 @@ const createProduct = async (req, res) => {
 // Update product (admin only)
 const updateProduct = async (req, res) => {
   try {
-    const { artisan, images, ...otherFields } = req.body;
+    const { artisan, images, videos, specifications, ...otherFields } = req.body;
+    
+    // Normalize specifications to match schema (handle both frontend and backend field names)
+    const normalizedSpecs = specifications ? {
+      dimension: specifications.dimensions || specifications.dimension || '',
+      weight: specifications.weight || '',
+      category: specifications.material || specifications.category || '',
+      countryOfOrigin: specifications.origin || specifications.countryOfOrigin || '',
+    } : undefined;
     
     const updateData = {
       ...otherFields,
       artisanInfo: artisan || req.body.artisanInfo,
       images: images || [],
+      videos: videos || [],
     };
+    
+    // Only set specifications if provided
+    if (normalizedSpecs) {
+      updateData.specifications = normalizedSpecs;
+    }
     
     // Update image to first in array if images provided
     if (images && images.length > 0 && !updateData.image) {

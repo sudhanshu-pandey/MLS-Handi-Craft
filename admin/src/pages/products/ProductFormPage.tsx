@@ -26,12 +26,39 @@ const INITIAL_FORM: ProductFormData = {
 }
 
 const normalizeSpecifications = (specifications: Record<string, any> | undefined) => {
-  const specs = specifications || {}
+  if (!specifications || typeof specifications !== 'object') {
+    return {
+      dimensions: '',
+      weight: '',
+      material: '',
+      origin: '',
+    }
+  }
+  
   return {
-    dimensions: specs.dimensions || specs.dimension || '',
+    dimensions: specifications.dimensions || specifications.dimension || '',
+    weight: specifications.weight || '',
+    material: specifications.material || specifications.category || '',
+    origin: specifications.origin || specifications.countryOfOrigin || '',
+  }
+}
+
+// Denormalize specifications for backend (map frontend names to backend schema)
+const denormalizeSpecifications = (specs: Record<string, string> | undefined): Record<string, string> => {
+  if (!specs) {
+    return {
+      dimension: '',
+      weight: '',
+      category: '',
+      countryOfOrigin: '',
+    }
+  }
+  
+  return {
+    dimension: specs.dimensions || specs.dimension || '',
     weight: specs.weight || '',
-    material: specs.material || specs.matrial || specs.category || '',
-    origin: specs.origin || specs.countryOfOrigin || '',
+    category: specs.material || specs.category || '',
+    countryOfOrigin: specs.origin || specs.countryOfOrigin || '',
   }
 }
 
@@ -115,10 +142,16 @@ export default function ProductFormPage() {
     }
     setIsSaving(true)
     try {
+      // Prepare form data with denormalized specifications for backend
+      const submitData = {
+        ...form,
+        specifications: denormalizeSpecifications(form.specifications as any),
+      }
+      
       if (isEdit) {
-        await productService.update(id, form)
+        await productService.update(id, submitData)
       } else {
-        await productService.create(form)
+        await productService.create(submitData)
       }
       toast.success(`Product ${isEdit ? 'updated' : 'created'} successfully`)
       navigate('/products')

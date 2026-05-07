@@ -14,6 +14,7 @@ import PageHeader from '../../components/common/PageHeader'
 import DataTable, { Column } from '../../components/common/DataTable'
 import Badge from '../../components/common/Badge'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
+import Loader from '../../components/common/Loader'
 import { formatCurrency, formatDate } from '../../utils/formatters'
 import { productService } from '../../services/productService'
 import { MOCK_PRODUCTS } from '../../utils/mockData'
@@ -315,6 +316,10 @@ export default function ProductsPage() {
     link.download = 'product-import-template.csv'
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  if (isLoading) {
+    return <Loader message="Loading products..." />
   }
 
   return (
