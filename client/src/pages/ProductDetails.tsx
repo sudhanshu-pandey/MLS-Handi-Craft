@@ -114,27 +114,36 @@ const ProductDetails = () => {
   // Fetch product by ID on mount
   useEffect(() => {
     const fetchProduct = async () => {
+      setLoading(true)
       try {
-        // Load all products to ensure we have data
+        // Load product by ID from backend
         await loadProductById(productId)
-        
-        // Try to find product - first by numeric ID, then by string ID
-        let fetchedProduct = getProductById(numericId)
-        
-        if (!fetchedProduct) {
-          fetchedProduct = getProductById(productId)
-        }
-        setProduct(fetchedProduct)
-        setLoading(false)
       } catch (error) {
-        setLoading(false)
+        console.error('Error loading product:', error)
       }
     }
     
     if (productId) {
       fetchProduct()
     }
-  }, [productId, numericId, loadProductById, getProductById])
+  }, [productId, loadProductById])
+
+  // Update product state when allProducts changes
+  useEffect(() => {
+    if (productId) {
+      // Try to find product - first by numeric ID, then by string ID
+      let fetchedProduct = getProductById(numericId)
+      
+      if (!fetchedProduct) {
+        fetchedProduct = getProductById(productId)
+      }
+      
+      if (fetchedProduct) {
+        setProduct(fetchedProduct)
+        setLoading(false)
+      }
+    }
+  }, [productId, numericId, getProductById])
 
   // Sync isWishlisted state with Redux wishlist
   useEffect(() => {
@@ -226,11 +235,6 @@ const ProductDetails = () => {
       setDeliveryLoading(false)
     })
   }, [debouncedPincode])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 500)
-    return () => window.clearTimeout(timer)
-  }, [])
 
   useEffect(() => {
     if (!product) {
