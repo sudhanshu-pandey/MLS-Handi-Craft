@@ -34,34 +34,27 @@ const app = express();
 // CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    
-    if (!origin) {
-      return callback(null, true);
-    }
-    
+    const isLocalhost = !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       process.env.ADMIN_URL,
-      "https://mls-handi-craft.onrender.com",
-      "https://mls-handi-craft-admin.onrender.com"
-    ].filter(Boolean);
+      "https://handi-craft-frontend.onrender.com",
+    ];
 
     if (isLocalhost || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn(`CORS request blocked from origin: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200,
 };
 
 // Middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors(corsOptions));
 
 // Routes
@@ -89,11 +82,11 @@ app.use("/api/donations", donationRouter);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  
+
   // Schedule cleanup job to run every 2 minutes
   // This will automatically delete expired orders
   scheduleCleanupJob();
-  
+
   // Start OTP security cleanup tasks
   startOTPCleanupTasks();
 });
