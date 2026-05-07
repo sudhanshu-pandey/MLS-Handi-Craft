@@ -24,4 +24,29 @@ const upload = multer({
   },
 });
 
+// Separate upload middleware for videos
+const videoUpload = multer({
+  storage: multerS3({
+    s3: s3Client,
+    bucket: S3_BUCKET,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, cb) => {
+      // Keep original filename, sanitize spaces → underscores
+      const safeName = file.originalname.replace(/\s+/g, "_");
+      cb(null, safeName);
+    },
+  }),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB for videos
+  fileFilter: (req, file, cb) => {
+    // Allow common video formats
+    const allowedExtensions = /mp4|webm|avi|mov|mkv|flv|wmv|m4v/;
+    const allowedMimeTypes = /video\//;
+    const extOk = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
+    const mimeOk = allowedMimeTypes.test(file.mimetype);
+    if (extOk && mimeOk) return cb(null, true);
+    cb(new Error("Only video files (mp4, webm, avi, mov, mkv, flv, wmv, m4v) are allowed"));
+  },
+});
+
 export default upload;
+export { videoUpload };

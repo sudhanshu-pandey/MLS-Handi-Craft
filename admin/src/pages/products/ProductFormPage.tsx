@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import PageHeader from '../../components/common/PageHeader'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { productService } from '../../services/productService'
+import { uploadService } from '../../services/uploadService'
 import { MOCK_PRODUCTS } from '../../utils/mockData'
 import { validatePrice, validateStock } from '../../utils/validation'
 import type { ProductFormData } from '../../types'
@@ -233,7 +234,8 @@ export default function ProductFormPage() {
 
     setIsUploadingImages(true)
     try {
-      const uploadedImages = await Promise.all(files.map(file => readFileAsDataUrl(file)))
+      // Upload images to AWS S3 and get URLs
+      const uploadedImages = await uploadService.uploadMultiple(files)
       appendImages(uploadedImages)
       toast.success(`${uploadedImages.length} image${uploadedImages.length > 1 ? 's' : ''} uploaded from laptop`)
     } catch (error) {
@@ -303,7 +305,8 @@ export default function ProductFormPage() {
 
     setIsUploadingVideos(true)
     try {
-      const uploadedVideos = await Promise.all(files.map(file => readFileAsDataUrl(file)))
+      // Upload videos to AWS S3 and get URLs
+      const uploadedVideos = await uploadService.uploadMultipleVideos(files)
       appendVideos(uploadedVideos)
       toast.success(`${uploadedVideos.length} video${uploadedVideos.length > 1 ? 's' : ''} uploaded from laptop`)
     } catch (error) {
