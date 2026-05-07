@@ -34,13 +34,11 @@ const app = express();
 // CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests without origin (like mobile apps, desktop apps, curl requests)
+    
     if (!origin) {
       return callback(null, true);
     }
     
-    // Allow any localhost port (Vite picks dynamically), plus known production URLs
-    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:') || origin === 'http://localhost';
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       process.env.ADMIN_URL,

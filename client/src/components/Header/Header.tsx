@@ -59,7 +59,7 @@ const Header = () => {
             <Link to="/products" className={styles.shopNow}>Shop Now</Link>
 
           <button className={styles.searchBtn} onClick={() => setIsSearchOpen(!isSearchOpen)} aria-label="Search">
-            🔍
+            <img src="/images/search-icon.png" alt="Search" className={styles.searchIcon} />
           </button>
 
           <div className={styles.cartLink}>
