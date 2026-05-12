@@ -97,7 +97,6 @@ const MiniCart = () => {
           aria-label={`Cart, ${cartItemCount} items`}
         >
           🛒
-          <span className={styles.cartLabel}>Cart</span>
           {cartItemCount > 0 && (
             <span className={styles.count}>{cartItemCount > 99 ? '99+' : cartItemCount}</span>
           )}

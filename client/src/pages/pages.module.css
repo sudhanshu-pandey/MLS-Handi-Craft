@@ -42,15 +42,15 @@
 
 .sectionTitle {
   text-align: center;
-  margin: var(--spacing-xl) 0;
-  padding: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md) 0;
   font-size: var(--font-size-xl);
   color: var(--primary-color);
   border-bottom: 3px solid var(--primary-color);
 }
 
 .arrivals {
-  padding: var(--spacing-xl) 0;
+  padding: var(--spacing-lg) 0;
   background-color: var(--bg-white);
 }
 

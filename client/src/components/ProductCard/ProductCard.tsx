@@ -1,5 +1,7 @@
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAppDispatch, useAppSelector } from '../../store/hooks'
+import { addItem, removeItem } from '../../store/slices/wishlistSlice'
 import QuantityControl from '../QuantityControl/QuantityControl'
 import styles from './ProductCard.module.css'
 
@@ -22,6 +24,10 @@ interface ProductCardProps {
 }
 
 const ProductCard = memo(({ product }: ProductCardProps) => {
+  const dispatch = useAppDispatch()
+  const wishlistItems = useAppSelector((state) => state.wishlist.items)
+  const [isWishlisted, setIsWishlisted] = useState(false)
+  
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
@@ -30,9 +36,44 @@ const ProductCard = memo(({ product }: ProductCardProps) => {
   const productId = product.id || (typeof product._id === 'string' ? product._id : String(product._id))
   const navigateId = product.id || product._id
 
+  // Check if product is in Redux wishlist
+  useEffect(() => {
+    const isInWishlist = wishlistItems.some((item: any) => 
+      String(item.productId) === String(productId)
+    )
+    setIsWishlisted(isInWishlist)
+  }, [wishlistItems, productId])
+
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault()
+    
+    if (isWishlisted) {
+      // Remove from wishlist
+      dispatch(removeItem(productId))
+      setIsWishlisted(false)
+    } else {
+      // Add to wishlist
+      dispatch(addItem({
+        productId: productId,
+        productName: product.name,
+        productPrice: product.price,
+        productImage: product.image,
+      }))
+      setIsWishlisted(true)
+    }
+  }
+
   return (
     <div className={styles.card}>
       <div className={styles.imageWrapper}>
+        <button 
+          className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlisted : ''}`}
+          onClick={toggleWishlist}
+          aria-label="Add to wishlist"
+          title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          {isWishlisted ? '❤️' : '🤍'}
+        </button>
         <Link to={`/products/${navigateId}`} aria-label={`View ${product.name}`}>
           <img 
             src={product.image} 

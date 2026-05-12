@@ -23,6 +23,7 @@ import analyticsRouter from "./routes/analytics.route.js";
 import uploadRouter from "./routes/upload.route.js";
 import otpMonitoringRouter from "./routes/otp-monitoring.route.js";
 import donationRouter from "./routes/donation.route.js";
+import announcementRouter from "./routes/announcement.route.js";
 
 dotenv.config();
 
@@ -32,30 +33,34 @@ connectDB();
 const app = express();
 
 // CORS Configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.ADMIN_URL,
+  "https://handi-craft-frontend.onrender.com",
+].filter(Boolean);
+
 const corsOptions = {
   origin: (origin, callback) => {
-    const isLocalhost = !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      process.env.ADMIN_URL,
-      "https://handi-craft-frontend.onrender.com",
-    ];
-
-    if (isLocalhost || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      /^https?:\/\/localhost(:\d+)?$/.test(origin)
+    ) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(null, false);
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // Middleware
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cors(corsOptions));
 
 // Routes
 
@@ -77,6 +82,7 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/otp-monitoring", otpMonitoringRouter);
 app.use("/api/donations", donationRouter);
+app.use("/api/announcements", announcementRouter);
 
 // Server
 const PORT = process.env.PORT || 5000;

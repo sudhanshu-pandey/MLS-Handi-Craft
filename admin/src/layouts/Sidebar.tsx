@@ -10,6 +10,7 @@ import {
   TicketIcon,
   MapPinIcon,
   CalculatorIcon,
+  MegaphoneIcon,
   ArrowLeftOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { to: '/coupons', icon: TicketIcon, label: 'Coupons' },
   { to: '/sales-map', icon: MapPinIcon, label: 'Sales Map' },
   { to: '/calculator', icon: CalculatorIcon, label: 'Calculator' },
+  { to: '/announcements', icon: MegaphoneIcon, label: 'Announcements' },
 ]
 
 export default function Sidebar() {

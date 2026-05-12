@@ -12,7 +12,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: var(--spacing-lg);
 }
 
@@ -34,20 +34,24 @@
 
 .imageWrapper {
   width: 100%;
-  height: 180px;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  background-color: var(--bg-light-brown);
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm);
 }
 
 .imageWrapper img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  transition: transform 0.4s ease;
 }
 
 .categoryCard:hover .imageWrapper img {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 .categoryCard h3 {
@@ -66,10 +70,6 @@
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--spacing-md);
   }
-
-  .imageWrapper {
-    height: 150px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -85,10 +85,6 @@
   .grid {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--spacing-sm);
-  }
-
-  .imageWrapper {
-    height: 120px;
   }
 
   .categoryCard h3 {

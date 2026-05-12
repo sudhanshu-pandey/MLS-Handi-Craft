@@ -5,7 +5,6 @@ import { loadWishlist } from './store/slices/wishlistSlice'
 import { loadWishlistFromLocalStorage } from './store/middleware/cartPersistence'
 import { ToastProvider } from './context/ToastContext'
 import TopHeader from './components/TopHeader/TopHeader.tsx'
-import Navbar from './components/Navbar/Navbar.tsx'
 import Header from './components/Header/Header.tsx'
 import Footer from './components/Footer/Footer.tsx'
 import ScrollToTop from './components/ScrollToTop/ScrollToTop.tsx'
@@ -40,7 +39,6 @@ function App() {
         <div className="app">
           <TopHeader />
           <Header />
-          <Navbar />
           
           <main>
             <Suspense fallback={<div className="container" style={{ padding: '26px 0' }}>Loading...</div>}>

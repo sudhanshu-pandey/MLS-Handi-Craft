@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import { useCategories } from '../../hooks/useCategories'
 import productService from '../../services/product.service'
 import styles from './SearchBar.module.css'
 
@@ -32,13 +33,45 @@ interface SearchBarProps {
  */
 const SearchBar: React.FC<SearchBarProps> = ({ isOpen = false, onClose, maxResults = 8 }) => {
   const navigate = useNavigate()
+  const { categories } = useCategories()
   const [searchQuery, setSearchQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [typedText, setTypedText] = useState('')
+  const [isFading, setIsFading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Rotating placeholder with category names
+  const categoryNames = categories.length > 0 ? categories.map(c => c.name) : ['Pooja Thali', 'Chatra', 'Akhand Diya', 'Necklace', 'Rose Water Sprinklers']
+  const fullText = `Search for ${categoryNames[placeholderIndex % categoryNames.length]}...`
+
+  // Typing effect
+  useEffect(() => {
+    setTypedText('')
+    setIsFading(false)
+    let charIndex = 0
+    const typeInterval = setInterval(() => {
+      charIndex++
+      setTypedText(fullText.slice(0, charIndex))
+      if (charIndex >= fullText.length) {
+        clearInterval(typeInterval)
+      }
+    }, 60)
+    return () => clearInterval(typeInterval)
+  }, [placeholderIndex, fullText])
+
+  // Cycle to next placeholder every 5s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsFading(true)
+      setTimeout(() => setPlaceholderIndex(i => i + 1), 400)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Debounce the search query
   const debouncedQuery = useDebouncedValue(searchQuery, 300)
@@ -173,11 +206,20 @@ const SearchBar: React.FC<SearchBarProps> = ({ isOpen = false, onClose, maxResul
   return (
     <div className={`${styles.searchBarContainer} ${isOpen ? styles.active : ''}`.trim()}>
       <div className={styles.searchInputWrapper}>
+        <svg className={styles.searchIconLeft} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        {!searchQuery && (
+          <span className={`${styles.animatedPlaceholder} ${isFading ? styles.fadeOut : ''}`}>
+            {typedText}
+          </span>
+        )}
         <input
           ref={searchInputRef}
           type="text"
           className={styles.searchInput}
-          placeholder="Search products... (min 2 characters)"
+          placeholder=""
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}

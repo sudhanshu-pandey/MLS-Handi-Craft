@@ -6,11 +6,10 @@ import PageHeader from '../../components/common/PageHeader'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { productService } from '../../services/productService'
 import { uploadService } from '../../services/uploadService'
+import { categoryService } from '../../services/categoryService'
 import { MOCK_PRODUCTS } from '../../utils/mockData'
 import { validatePrice, validateStock } from '../../utils/validation'
 import type { ProductFormData } from '../../types'
-
-const DEFAULT_CATEGORIES = ['Paintings', 'Pottery', 'Textiles', 'Metalcraft', 'Woodcraft', 'Jewelry', 'Handicrafts']
 
 const INITIAL_FORM: ProductFormData = {
   name: '',
@@ -79,6 +78,26 @@ export default function ProductFormPage() {
   const [isUploadingVideos, setIsUploadingVideos] = useState(false)
   const [showDescriptionPreview, setShowDescriptionPreview] = useState(false)
   const [tagInput, setTagInput] = useState('')
+  const [categories, setCategories] = useState<Array<{ _id: string; name: string }>>([])
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsCategoriesLoading(true)
+      try {
+        const res = await categoryService.getAll()
+        const categoryList = res.data?.categories || res.data || []
+        setCategories(categoryList)
+      } catch (err) {
+        console.error('Failed to fetch categories:', err)
+        toast.error('Failed to load categories')
+      } finally {
+        setIsCategoriesLoading(false)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
     if (!isEdit) return
@@ -684,9 +703,16 @@ export default function ProductFormPage() {
                   onChange={e => set('category', e.target.value)}
                   className="input-field"
                   required
+                  disabled={isCategoriesLoading}
                 >
-                  <option value="">Select category</option>
-                  {DEFAULT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="">
+                    {isCategoriesLoading ? 'Loading categories...' : 'Select category'}
+                  </option>
+                  {categories.map((cat: any) => (
+                    <option key={cat._id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

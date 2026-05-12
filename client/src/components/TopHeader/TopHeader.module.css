@@ -5,7 +5,7 @@
   margin: 0;
   width: 100%;
   box-sizing: border-box;
-  height: 30px;
+  height: 40px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -15,7 +15,8 @@
   width: 100%;
   overflow: hidden;
   white-space: nowrap;
-  display: block;
+  display: flex;
+  align-items: center;
   height: 100%;
   position: relative;
   contain: layout paint;

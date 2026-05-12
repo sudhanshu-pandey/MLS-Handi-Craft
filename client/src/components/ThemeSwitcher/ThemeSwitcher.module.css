@@ -135,36 +135,37 @@
 }
 
 .modeToggle {
-  width: 42px;
-  height: 22px;
-  min-width: 42px;
-  min-height: 22px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 2px;
-  transition: background-color 0.3s ease;
+  justify-content: center;
+  padding: 4px;
+  transition: background-color 0.2s ease;
+  color: var(--text-primary);
 }
 
-.modeToggle.dark {
-  background: rgba(0, 0, 0, 0.45);
+.modeToggle:hover {
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.modeIcon {
+  width: 20px;
+  height: 20px;
 }
 
 .toggleThumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #ffffff;
-  transform: translateX(0);
-  transition: transform 0.3s ease;
+  display: none;
 }
 
 .dark .toggleThumb {
-  transform: translateX(20px);
-  background: #f5f5f5;
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -197,19 +198,15 @@
   }
 
   .modeToggle {
-    width: 36px;
-    height: 20px;
-    min-width: 36px;
-    min-height: 20px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
   }
 
-  .toggleThumb {
-    width: 16px;
-    height: 16px;
-  }
-
-  .dark .toggleThumb {
-    transform: translateX(16px);
+  .modeIcon {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -238,20 +235,16 @@
   }
 
   .modeToggle {
-    width: 32px;
-    height: 18px;
-    min-width: 32px;
-    min-height: 18px;
-    padding: 1px;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    padding: 3px;
   }
 
-  .toggleThumb {
-    width: 14px;
-    height: 14px;
-  }
-
-  .dark .toggleThumb {
-    transform: translateX(14px);
+  .modeIcon {
+    width: 16px;
+    height: 16px;
   }
 
   .extraPalette {

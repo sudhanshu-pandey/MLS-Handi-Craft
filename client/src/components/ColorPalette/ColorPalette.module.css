@@ -1,0 +1,106 @@
+.paletteContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.paletteToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.paletteToggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.colorDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.colorDot:hover {
+  transform: scale(1.2);
+}
+
+.activeDot {
+  border-color: #333;
+  box-shadow: 0 0 0 1px #fff, 0 0 0 2px #333;
+}
+
+.expandedPalette {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 4px;
+}
+
+.allColors {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.expandedColor {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expandedColor:hover {
+  transform: scale(1.2);
+}
+
+.activeExpandedColor {
+  border-color: #333;
+  box-shadow: 0 0 0 1px #fff, 0 0 0 2px #333;
+}
+
+@media (max-width: 768px) {
+  .paletteToggle {
+    padding: 1px;
+  }
+
+  .colorDot {
+    width: 12px;
+    height: 12px;
+  }
+
+  .allColors {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .expandedColor {
+    width: 20px;
+    height: 20px;
+  }
+
+  .expandedPalette {
+    padding: 8px;
+  }
+}
+

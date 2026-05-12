@@ -17,6 +17,7 @@ const BannersPage = lazy(() => import('./pages/banners/BannersPage'))
 const CouponsPage = lazy(() => import('./pages/coupons/CouponsPage'))
 const SalesMapPage = lazy(() => import('./pages/map/MapPage'))
 const CalculatorPage = lazy(() => import('./pages/calculator/CalculatorPage'))
+const AnnouncementsPage = lazy(() => import('./pages/announcements/AnnouncementsPage'))
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="coupons" element={<CouponsPage />} />
             <Route path="sales-map" element={<SalesMapPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
+            <Route path="announcements" element={<AnnouncementsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
