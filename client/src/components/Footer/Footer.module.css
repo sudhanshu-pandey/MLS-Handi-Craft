@@ -1,15 +1,76 @@
 .footer {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--bg-white);
+  background: linear-gradient(135deg, var(--bg-light-brown, #faf5f0) 0%, var(--bg-white, #ffffff) 100%);
+  color: var(--text-dark);
   padding-top: 0;
   margin-top: 80px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Newsletter Section */
+.animatedBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 250px;
+  overflow: hidden;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.waveSvg {
+  position: absolute;
+  top: -10px;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,50 Q300,10 600,50 T1200,50 L1200,0 L0,0 Z' fill='%23d4a574' opacity='0.3'/%3E%3Cpath d='M0,60 Q300,20 600,60 T1200,60 L1200,0 L0,0 Z' fill='%23d4a574' opacity='0.5'/%3E%3C/svg%3E") repeat-x;
+  animation: wave 15s linear infinite;
+}
+
+@keyframes wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(1200px); }
+}
+
+.floatingEmojis {
+  position: absolute;
+  width: 100%;
+  height: 200px;
+  top: 0;
+}
+
+.floatingEmoji {
+  position: absolute;
+  font-size: 64px;
+  opacity: 0.7;
+  animation: float 6s ease-in-out infinite;
+}
+
+.emoji1 { left: 5%; top: 20px; animation-delay: 0s; }
+.emoji2 { left: 15%; top: 60px; animation-delay: 0.5s; }
+.emoji3 { left: 30%; top: 10px; animation-delay: 1s; }
+.emoji4 { left: 50%; top: 40px; animation-delay: 1.5s; }
+.emoji5 { left: 65%; top: 30px; animation-delay: 2s; }
+.emoji6 { left: 80%; top: 70px; animation: float 7s ease-in-out infinite; animation-delay: 2.5s; }
+.emoji7 { left: 10%; top: 100px; animation: float 8s ease-in-out infinite; animation-delay: 3s; }
+.emoji8 { left: 42%; top: 80px; animation: float 6.5s ease-in-out infinite; animation-delay: 3.5s; }
+.emoji9 { left: 75%; top: 20px; animation: float 7.5s ease-in-out infinite; animation-delay: 4s; }
+.emoji10 { right: 12%; top: 60px; animation: float 8.5s ease-in-out infinite; animation-delay: 4.5s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-35px); }
+}
+
 .newsletter {
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(96, 49, 21, 0.08) 100%);
+  background: rgba(var(--primary-rgb, 212, 165, 116), 0.1);
   padding: 48px 24px;
-  border-bottom: 1px solid rgba(212, 165, 116, 0.2);
+  border-bottom: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.2);
+  position: relative;
+  z-index: 1;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .newsletterContent {
@@ -25,12 +86,12 @@
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 12px 0;
-  color: #ffffff;
+  color: var(--text-dark);
 }
 
 .newsletterText p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-light);
   font-size: 14px;
 }
 
@@ -42,21 +103,30 @@
 .newsletterForm input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid rgba(212, 165, 116, 0.3);
+  border: 1px solid var(--primary);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-white);
   font-size: 14px;
   font-family: 'Segoe UI', sans-serif;
+  transition: all 0.3s ease;
+  color: var(--text-dark);
+}
+
+.newsletterForm input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--bg-white);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 125, 46, 79), 0.1);
 }
 
 .newsletterForm input::placeholder {
-  color: #999;
+  color: var(--text-light);
 }
 
 .newsletterForm button {
   padding: 12px 32px;
-  background: var(--bg-white);
-  color: var(--primary);
+  background: var(--primary);
+  color: var(--bg-white);
   border: none;
   border-radius: 6px;
   font-weight: 600;
@@ -66,18 +136,11 @@
 }
 
 .newsletterForm button:hover {
+  background: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.successMsg {
-  position: absolute;
-  color: #4caf50;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-/* Main Footer Content */
 .footerMain {
   max-width: 1280px;
   margin: 0 auto;
@@ -85,21 +148,49 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.column {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.decorativeEmoji {
+  font-size: 24px;
+  animation: bobbing 3s ease-in-out infinite;
+}
+
+@keyframes bobbing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 .column h4 {
   font-size: 16px;
   font-weight: 700;
-  margin: 0 0 20px 0;
-  color: var(--secondary-color);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  margin: 0;
+  color: var(--text-dark);
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
 }
 
 .column p {
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-light);
   margin: 0 0 20px 0;
 }
 
@@ -113,23 +204,10 @@
   margin-bottom: 12px;
 }
 
-.column ul li a {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.column ul li a:hover {
-  color: var(--secondary-color);
-  padding-left: 4px;
-}
-
-/* Category Button Styling */
+.column ul li a,
 .column ul li button {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-light);
   text-decoration: none;
   transition: all 0.3s ease;
   display: inline-block;
@@ -138,14 +216,32 @@
   cursor: pointer;
   padding: 0;
   font: inherit;
+  position: relative;
 }
 
+.column ul li a:hover,
 .column ul li button:hover {
-  color: var(--secondary-color);
-  padding-left: 4px;
+  color: var(--primary);
+  padding-left: 6px;
 }
 
-/* Social Links */
+.column ul li a::before,
+.column ul li button::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.column ul li a:hover::before,
+.column ul li button:hover::before {
+  width: 100%;
+}
+
 .socialLinks {
   display: flex;
   gap: 12px;
@@ -156,24 +252,23 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(212, 165, 116, 0.15);
+  background: rgba(var(--primary-rgb, 212, 165, 116), 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--secondary-color);
+  color: var(--primary);
   text-decoration: none;
   font-size: 18px;
   transition: all 0.3s ease;
-  border: 1px solid rgba(212, 165, 116, 0.3);
+  border: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.3);
 }
 
 .socialLinks a:hover {
-  background: var(--secondary-color);
-  color: var(--primary);
-  transform: translateY(-4px);
+  background: var(--primary);
+  color: var(--bg-white);
+  transform: translateY(-4px) rotate(360deg);
 }
 
-/* Contact Info */
 .contactInfo {
   font-size: 14px;
   margin-bottom: 20px;
@@ -181,19 +276,21 @@
 
 .contactInfo p {
   margin: 0 0 10px 0;
+  color: var(--text-light);
 }
 
 .contactInfo a {
-  color: var(--secondary-color);
+  color: var(--primary);
   text-decoration: none;
   transition: color 0.3s ease;
+  font-weight: 600;
 }
 
 .contactInfo a:hover {
-  color: #ffffff;
+  color: var(--primary);
+  text-decoration: underline;
 }
 
-/* Payments */
 .payments {
   display: flex;
   gap: 12px;
@@ -203,8 +300,8 @@
 .payments span {
   width: 40px;
   height: 40px;
-  background: rgba(212, 165, 116, 0.1);
-  border: 1px solid rgba(212, 165, 116, 0.2);
+  background: rgba(var(--primary-rgb, 212, 165, 116), 0.1);
+  border: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.2);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -214,40 +311,66 @@
 }
 
 .payments span:hover {
-  background: rgba(212, 165, 116, 0.2);
+  background: var(--primary);
+  transform: scale(1.15);
 }
 
-/* Trust Section */
 .trustSection {
-  background: transparent;
+  background: rgba(var(--primary-rgb, 212, 165, 116), 0.05);
   padding: 32px 24px;
-  border-top: 1px solid rgba(212, 165, 116, 0.2);
-  border-bottom: 1px solid rgba(212, 165, 116, 0.2);
+  border-top: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.2);
+  border-bottom: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.2);
+  position: relative;
+  z-index: 1;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .trustBadge {
   max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 28px;
-  text-align: center;
+  margin: 0 auto 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .trustBadge span {
-  font-size: 14px;
-  color: #d4a574;
+  font-size: 18px;
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 1px;
+  animation: pulse 2s ease-in-out infinite;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-/* Footer Bottom */
+.paymentMethods {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.paymentMethods img {
+  height: 32px;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.paymentMethods img:hover {
+  opacity: 1;
+  transform: translateY(-4px);
+}
+
 .footerBottom {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--primary-rgb, 212, 165, 116), 0.1);
   padding: 24px;
+  position: relative;
+  z-index: 1;
+  transition: background 0.3s ease;
 }
 
 .footerBottomContent {
@@ -261,277 +384,46 @@
 
 .footerBottomContent p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-dark);
+  font-weight: 600;
 }
 
 .bottomLinks {
   display: flex;
   gap: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-dark);
 }
 
 .bottomLinks a {
-  color: #d4a574;
+  color: var(--primary);
   text-decoration: none;
   transition: color 0.3s ease;
+  font-weight: 600;
 }
 
 .bottomLinks a:hover {
-  color: #ffffff;
+  color: var(--primary-dark);
+  text-decoration: underline;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
-  .newsletter {
-    padding: 40px 20px;
-  }
-  
-  .newsletterContent {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-  
-  .footerMain {
-    grid-template-columns: repeat(3, 1fr);
-    padding: 40px 20px;
-  }
-  
-  .trustBadge {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .newsletterContent { grid-template-columns: 1fr; gap: 30px; }
+  .footerMain { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .scrollToTop {
-    width: 45px;
-    height: 45px;
-    bottom: 20px;
-    right: 20px;
-    font-size: 20px;
-  }
-  
-  .newsletter {
-    padding: 30px 16px;
-  }
-  
-  .newsletterContent {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .newsletterText h3 {
-    font-size: 24px;
-  }
-  
-  .newsletterText p {
-    font-size: 13px;
-  }
-  
-  .inputWrapper {
-    flex-direction: column;
-  }
-  
-  .newsletterForm input {
-    padding: 12px 14px;
-    font-size: 13px;
-  }
-  
-  .newsletterForm button {
-    padding: 12px 24px;
-    font-size: 13px;
-  }
-  
-  .footer {
-    margin-top: 60px;
-  }
-  
-  .footerMain {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 30px 16px;
-    gap: 20px;
-  }
-  
-  .column h4 {
-    font-size: 14px;
-    margin-bottom: 16px;
-  }
-  
-  .column p {
-    font-size: 13px;
-  }
-  
-  .column ul li a {
-    font-size: 13px;
-  }
-  
-  .social {
-    width: 42px;
-    height: 42px;
-    font-size: 18px;
-  }
-  
-  .paymentIcon {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-  
-  .trustBadge {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .trustItem {
-    padding: 16px;
-  }
-  
-  .trustItem span {
-    font-size: 28px;
-  }
-  
-  .trustItem strong {
-    font-size: 14px;
-  }
-  
-  .trustItem p {
-    font-size: 11px;
-  }
-  
-  .footerBottomContent {
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
-    font-size: 12px;
-  }
+  .newsletterContent { grid-template-columns: 1fr; }
+  .newsletterText h3 { font-size: 24px; }
+  .footerMain { grid-template-columns: repeat(2, 1fr); padding: 30px 16px; }
+  .column h4 { font-size: 14px; }
+  .socialLinks a { width: 36px; height: 36px; }
 }
 
 @media (max-width: 480px) {
-  .scrollToTop {
-    width: 40px;
-    height: 40px;
-    bottom: 16px;
-    right: 16px;
-    font-size: 18px;
-  }
-  
-  .newsletter {
-    padding: 20px 12px;
-  }
-  
-  .newsletterContent {
-    gap: 16px;
-  }
-  
-  .newsletterText h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-  
-  .newsletterText p {
-    font-size: 12px;
-  }
-  
-  .newsletterForm input {
-    padding: 10px 12px;
-    font-size: 12px;
-  }
-  
-  .newsletterForm button {
-    padding: 10px 18px;
-    font-size: 12px;
-  }
-  
-  .successMsg {
-    font-size: 11px;
-  }
-  
-  .footerMain {
-    grid-template-columns: 1fr;
-    padding: 20px 12px;
-    gap: 16px;
-  }
-  
-  .column h4 {
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-  
-  .column p {
-    font-size: 12px;
-  }
-  
-  .column ul li {
-    margin-bottom: 10px;
-  }
-  
-  .column ul li a {
-    font-size: 12px;
-  }
-  
-  .social {
-    width: 38px;
-    height: 38px;
-    font-size: 16px;
-    gap: 10px;
-  }
-  
-  .socialLinks {
-    gap: 10px;
-    margin-top: 16px;
-  }
-  
-  .contactInfo {
-    font-size: 12px;
-    margin-bottom: 16px;
-  }
-  
-  .contactInfo p {
-    margin: 0 0 8px 0;
-  }
-  
-  .paymentIcon {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-  }
-  
-  .payments {
-    gap: 8px;
-    margin-top: 12px;
-  }
-  
-  .trustSection {
-    padding: 24px 12px;
-  }
-  
-  .trustItem {
-    padding: 12px;
-    gap: 12px;
-  }
-  
-  .trustItem span {
-    font-size: 24px;
-    min-width: 40px;
-  }
-  
-  .trustItem strong {
-    font-size: 12px;
-    margin-bottom: 2px;
-  }
-  
-  .trustItem p {
-    font-size: 10px;
-  }
-  
-  .footerBottom {
-    padding: 16px 12px;
-  }
-  
-  .footerBottomContent {
-    font-size: 11px;
-  }
-  
-  .bottomLinks {
-    gap: 8px;
-  }
+  .newsletter { padding: 20px 12px; }
+  .newsletterForm { flex-direction: column; }
+  .newsletterForm input,
+  .newsletterForm button { width: 100%; }
+  .footerMain { grid-template-columns: 1fr; padding: 20px 12px; }
+  .column h4 { font-size: 13px; }
 }

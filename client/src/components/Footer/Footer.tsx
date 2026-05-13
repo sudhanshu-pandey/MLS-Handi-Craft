@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '../../store/hooks'
 import { setCategories } from '../../store/slices/filterSlice'
@@ -10,6 +10,10 @@ const Footer = () => {
   const dispatch = useAppDispatch()
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+
+  useEffect(() => {
+    // Animation runs automatically
+  }, [])
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,6 +31,24 @@ const Footer = () => {
 
   return (
     <footer className={styles.footer}>
+      {/* Animated Background Elements */}
+      <div className={styles.animatedBg}>
+        <div className={styles.waveSvg}></div>
+        {/* Floating product emojis */}
+        <div className={styles.floatingEmojis}>
+          <div className={`${styles.floatingEmoji} ${styles.emoji1}`}>🪔</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji2}`}>⚱️</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji3}`}>🏺</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji4}`}>👑</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji5}`}>🧵</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji6}`}>🪔</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji7}`}>🎀</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji8}`}>✨</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji9}`}>💎</div>
+          <div className={`${styles.floatingEmoji} ${styles.emoji10}`}>🌿</div>
+        </div>
+      </div>
+
       {/* Newsletter Section */}
       <div className={styles.newsletter}>
         <div className={styles.newsletterContent}>
@@ -51,7 +73,10 @@ const Footer = () => {
       <div className={styles.footerMain}>
         {/* Column 1: About */}
         <div className={styles.column}>
-          <h4>About MLS Handicrafts</h4>
+          <div className={styles.columnHeader}>
+            <span className={styles.decorativeEmoji}>🌈</span>
+            <h4>About MLS Handicrafts</h4>
+          </div>
           <p>Authentic Indian handicrafts bringing tradition and artistry to your home. Premium quality, handcrafted with love.</p>
           <div className={styles.socialLinks}>
             <a href="#" title="Facebook">f</a>
@@ -61,55 +86,68 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Column 2: Products */}
+        {/* Column 2: Explore */}
         <div className={styles.column}>
-          <h4>Shop</h4>
+          <div className={styles.columnHeader}>
+            <span className={styles.decorativeEmoji}>🛍️</span>
+            <h4>Explore</h4>
+          </div>
           <ul>
-            <li><Link to="/products">All Products</Link></li>
-            <li><button onClick={() => handleCategoryClick('Brass Handicrafts')}>Brass Handicrafts</button></li>
-            <li><button onClick={() => handleCategoryClick('Wooden Handicrafts')}>Wooden Handicrafts</button></li>
-            <li><button onClick={() => handleCategoryClick('Marble Handicrafts')}>Marble Handicrafts</button></li>
-            <li><button onClick={() => handleCategoryClick('Table Lamps')}>Table Lamps</button></li>
+            <li><Link to="/products">Home</Link></li>
+            <li><button onClick={() => handleCategoryClick('Metalcraft')}>Metalcraft</button></li>
+            <li><button onClick={() => handleCategoryClick('Pottery')}>Pottery</button></li>
+            <li><button onClick={() => handleCategoryClick('Textiles')}>Textiles</button></li>
+            <li><Link to="/about">About Us</Link></li>
+            <li><Link to="/contact">Contact</Link></li>
           </ul>
         </div>
 
-        {/* Column 3: Support */}
+        {/* Column 3: Quick Links */}
         <div className={styles.column}>
-          <h4>Support</h4>
+          <div className={styles.columnHeader}>
+            <span className={styles.decorativeEmoji}>⚡</span>
+            <h4>Quick Links</h4>
+          </div>
           <ul>
-            <li><Link to="/contact">Contact Us</Link></li>
+            <li><a href="/">Contact Information</a></li>
+            <li><a href="/">Privacy Policy</a></li>
+            <li><a href="/">Refund Policy</a></li>
+            <li><a href="/">Terms of Service</a></li>
+            <li><a href="/">Shipping Policy</a></li>
+          </ul>
+        </div>
+
+        {/* Column 4: Support */}
+        <div className={styles.column}>
+          <div className={styles.columnHeader}>
+            <span className={styles.decorativeEmoji}>💬</span>
+            <h4>Support</h4>
+          </div>
+          <ul>
             <li><a href="/">Shipping Info</a></li>
             <li><a href="/">Returns & Exchange</a></li>
             <li><a href="/">FAQ</a></li>
             <li><a href="/">Track Order</a></li>
+            <li><a href="/">Size Guide</a></li>
           </ul>
         </div>
 
-        {/* Column 4: Company */}
+        {/* Column 5: Contact & Subscribe */}
         <div className={styles.column}>
-          <h4>Company</h4>
-          <ul>
-            <li><Link to="/about">About Us</Link></li>
-            <li><a href="/">Privacy Policy</a></li>
-            <li><a href="/">Terms & Conditions</a></li>
-            <li><a href="/">Shipping Policy</a></li>
-            <li><a href="/">Careers</a></li>
-          </ul>
-        </div>
-
-        {/* Column 5: Contact */}
-        <div className={styles.column}>
-          <h4>Contact</h4>
+          <div className={styles.columnHeader}>
+            <span className={styles.decorativeEmoji}>📮</span>
+            <h4>Contact & Info</h4>
+          </div>
           <div className={styles.contactInfo}>
             <p><a href="mailto:info@mlshandicrafts.com">info@mlshandicrafts.com</a></p>
             <p><a href="tel:+918595651616">+91 8595 651 616</a></p>
             <p>Mon - Sat: 10AM - 6PM IST</p>
           </div>
           <div className={styles.payments}>
-            <span title="Credit Card">💳</span>
-            <span title="Debit Card">🏦</span>
+            <span title="Visa">💳</span>
+            <span title="Mastercard">💳</span>
             <span title="UPI">📲</span>
-            <span title="Net Banking">🌐</span>
+            <span title="Google Pay">�</span>
           </div>
         </div>
       </div>
@@ -117,10 +155,13 @@ const Footer = () => {
       {/* Trust Section */}
       <div className={styles.trustSection}>
         <div className={styles.trustBadge}>
-          <span>🔒 Secure SSL Encrypted</span>
-          <span>🚚 Free Shipping on 500+</span>
-          <span>↩️ Easy Returns (30 days)</span>
-          <span>💵 COD Available</span>
+          <span>🔒 100% SECURE PAYMENTS</span>
+        </div>
+        <div className={styles.paymentMethods}>
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="Visa" title="Visa" />
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="Mastercard" title="Mastercard" />
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="PayPal" title="PayPal" />
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="Google Pay" title="Google Pay" />
         </div>
       </div>
 
