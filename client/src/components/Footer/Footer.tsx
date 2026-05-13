@@ -2,12 +2,22 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '../../store/hooks'
 import { setCategories } from '../../store/slices/filterSlice'
+import useCategories from '../../hooks/useCategories'
 import styles from './Footer.module.css'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const { categories } = useCategories()
+  const topCategories = categories.length
+    ? categories.slice(0, 3)
+    : [
+        { _id: 'fallback-metalcraft', name: 'Metalcraft', slug: 'metalcraft', image: '', active: true },
+        { _id: 'fallback-pottery', name: 'Pottery', slug: 'pottery', image: '', active: true },
+        { _id: 'fallback-textiles', name: 'Textiles', slug: 'textiles', image: '', active: true },
+      ]
+
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
 
@@ -26,28 +36,30 @@ const Footer = () => {
 
   const handleCategoryClick = (categoryName: string) => {
     dispatch(setCategories([categoryName]))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     navigate('/products')
   }
 
   return (
-    <footer className={styles.footer}>
-      {/* Animated Background Elements */}
-      <div className={styles.animatedBg}>
-        <div className={styles.waveSvg}></div>
-        {/* Floating product emojis */}
-        <div className={styles.floatingEmojis}>
-          <div className={`${styles.floatingEmoji} ${styles.emoji1}`}>🪔</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji2}`}>⚱️</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji3}`}>🏺</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji4}`}>👑</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji5}`}>🧵</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji6}`}>🪔</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji7}`}>🎀</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji8}`}>✨</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji9}`}>💎</div>
-          <div className={`${styles.floatingEmoji} ${styles.emoji10}`}>🌿</div>
+    <>
+      <footer className={styles.footer}>
+        {/* Animated Background Elements */}
+        <div className={styles.animatedBg}>
+          <div className={styles.waveSvg}></div>
+          {/* Floating product emojis */}
+          <div className={styles.floatingEmojis}>
+            <div className={`${styles.floatingEmoji} ${styles.emoji1}`}>🪔</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji2}`}>⚱️</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji3}`}>🏺</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji4}`}>👑</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji5}`}>🧵</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji6}`}>🪔</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji7}`}>🎀</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji8}`}>✨</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji9}`}>💎</div>
+            <div className={`${styles.floatingEmoji} ${styles.emoji10}`}>🌿</div>
+          </div>
         </div>
-      </div>
 
       {/* Newsletter Section */}
       <div className={styles.newsletter}>
@@ -94,9 +106,13 @@ const Footer = () => {
           </div>
           <ul>
             <li><Link to="/products">Home</Link></li>
-            <li><button onClick={() => handleCategoryClick('Metalcraft')}>Metalcraft</button></li>
-            <li><button onClick={() => handleCategoryClick('Pottery')}>Pottery</button></li>
-            <li><button onClick={() => handleCategoryClick('Textiles')}>Textiles</button></li>
+            {topCategories.map((category) => (
+              <li key={category._id}>
+                <Link to="/products" onClick={() => handleCategoryClick(category.name)}>
+                  {category.name}
+                </Link>
+              </li>
+            ))}
             <li><Link to="/about">About Us</Link></li>
             <li><Link to="/contact">Contact</Link></li>
           </ul>
@@ -152,19 +168,6 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Trust Section */}
-      <div className={styles.trustSection}>
-        <div className={styles.trustBadge}>
-          <span>🔒 100% SECURE PAYMENTS</span>
-        </div>
-        <div className={styles.paymentMethods}>
-          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="Visa" title="Visa" />
-          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="Mastercard" title="Mastercard" />
-          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="PayPal" title="PayPal" />
-          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 64'%3E%3Crect fill='%23FFF' width='100' height='64' rx='4'/%3E%3C/svg%3E" alt="Google Pay" title="Google Pay" />
-        </div>
-      </div>
-
       {/* Footer Bottom */}
       <div className={styles.footerBottom}>
         <div className={styles.footerBottomContent}>
@@ -176,9 +179,20 @@ const Footer = () => {
             <span>•</span>
             <a href="/">Terms</a>
           </div>
+          <a
+            className={styles.whatsappLink}
+            href="https://wa.me/918595651616?text=Hello%20MLS%20Handicrafts%2C%20I%20would%20like%20to%20know%20more%20about%20your%20products."
+            target="_blank"
+            rel="noreferrer noopener"
+            title="Chat on WhatsApp"
+            aria-label="Chat on WhatsApp"
+          >
+            <span>💬</span>
+          </a>
         </div>
       </div>
     </footer>
+  </>
   )
 }
 

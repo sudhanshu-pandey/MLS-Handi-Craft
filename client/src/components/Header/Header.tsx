@@ -68,7 +68,7 @@ const Header = () => {
             />
           </a>
           <div className={styles.brandText}>
-            <h1 className={styles.brandName}>🇮🇳 MLS Handicrafts 🇮🇳</h1>
+            <h1 className={styles.brandName}> MLS Handicrafts 🇮🇳</h1>
             <p className={styles.brandTagline}>GIFT · DECOR · DIVINE</p>
           </div>
         </div>

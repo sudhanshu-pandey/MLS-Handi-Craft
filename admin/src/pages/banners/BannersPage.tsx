@@ -6,6 +6,7 @@ import Badge from '../../components/common/Badge'
 import Modal from '../../components/common/Modal'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { bannerService } from '../../services/bannerService'
+import { uploadService } from '../../services/uploadService'
 import type { Banner } from '../../types'
 
 interface BannerForm { title: string; subtitle: string; image: string; images: string[]; link: string; order: number; isActive: boolean }
@@ -97,19 +98,6 @@ export default function BannersPage() {
     setModalOpen(true)
   }
 
-  const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result)
-        return
-      }
-      reject(new Error('Unable to read selected file'))
-    }
-    reader.onerror = () => reject(new Error('File upload failed while reading image'))
-    reader.readAsDataURL(file)
-  })
-
   const handleBannerImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const [file] = Array.from(event.target.files || [])
     if (!file) return
@@ -122,16 +110,16 @@ export default function BannersPage() {
 
     setIsUploadingImages(true)
     try {
-      const uploadedImage = await readFileAsDataUrl(file)
+      const uploadedImage = await uploadService.uploadImage(file)
       setForm(current => ({
         ...current,
         image: uploadedImage,
         images: [uploadedImage],
       }))
       setImageOptions([uploadedImage])
-      toast.success('Banner image uploaded from laptop')
+      toast.success('Banner image uploaded to AWS and URL saved')
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to upload selected images'
+      const message = error instanceof Error ? error.message : 'Unable to upload selected image'
       toast.error(message)
     } finally {
       setIsUploadingImages(false)

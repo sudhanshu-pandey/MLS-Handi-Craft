@@ -1,10 +1,10 @@
 /* ===== Pages Styles ===== */
 
 .productsContainer {
-  width: 80%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -62,7 +62,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-lg);
-  padding: var(--spacing-lg) 0;
+  padding: 0 0 var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
   width: 100%;
   overflow: visible;
@@ -74,12 +74,13 @@
   gap: 30px;
   width: 100%;
   margin-bottom: 40px;
+  align-items: start;
 }
 
 .pageTitle {
   text-align: center;
-  margin: var(--spacing-xl) 0;
-  padding: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-sm) 0;
   border-bottom: 3px solid var(--primary-color);
 }
 

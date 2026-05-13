@@ -43,11 +43,21 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 const getColorByKey = (key: ThemeColorKey) => themeColors.find((item) => item.key === key) ?? themeColors[0]
 
+const hexToRgb = (hex: string) => {
+  const normalizedHex = hex.replace('#', '')
+  const bigint = parseInt(normalizedHex, 16)
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+  return `${r}, ${g}, ${b}`
+}
+
 const applyThemeColor = (key: ThemeColorKey) => {
   const selected = getColorByKey(key)
   document.documentElement.style.setProperty('--primary', selected.value)
   document.documentElement.style.setProperty('--primary-color', selected.value)
   document.documentElement.style.setProperty('--primary-dark', selected.dark)
+  document.documentElement.style.setProperty('--primary-rgb', hexToRgb(selected.value))
 }
 
 const applyThemeMode = (mode: ThemeMode) => {

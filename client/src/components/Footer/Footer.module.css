@@ -1,5 +1,5 @@
 .footer {
-  background: linear-gradient(135deg, var(--bg-light-brown, #faf5f0) 0%, var(--bg-white, #ffffff) 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-light-brown, #faf5f0) 85%) 0%, var(--bg-white, #ffffff) 100%);
   color: var(--text-dark);
   padding-top: 0;
   margin-top: 80px;
@@ -315,56 +315,6 @@
   transform: scale(1.15);
 }
 
-.trustSection {
-  background: rgba(var(--primary-rgb, 212, 165, 116), 0.05);
-  padding: 32px 24px;
-  border-top: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.2);
-  border-bottom: 1px solid rgba(var(--primary-rgb, 212, 165, 116), 0.2);
-  position: relative;
-  z-index: 1;
-  transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.trustBadge {
-  max-width: 1280px;
-  margin: 0 auto 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.trustBadge span {
-  font-size: 18px;
-  color: var(--primary);
-  font-weight: 700;
-  letter-spacing: 1px;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.paymentMethods {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.paymentMethods img {
-  height: 32px;
-  opacity: 0.7;
-  transition: all 0.3s ease;
-}
-
-.paymentMethods img:hover {
-  opacity: 1;
-  transform: translateY(-4px);
-}
-
 .footerBottom {
   background: rgba(var(--primary-rgb, 212, 165, 116), 0.1);
   padding: 24px;
@@ -379,6 +329,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
   font-size: 13px;
 }
 
@@ -406,7 +358,32 @@
   text-decoration: underline;
 }
 
-@media (max-width: 1024px) {
+.whatsappLink {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--bg-white);
+  font-size: 24px;
+  text-decoration: none;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+  z-index: 999;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whatsappLink:hover {
+  transform: translateY(-2px);
+  background: var(--primary-dark);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 768px) {
   .newsletterContent { grid-template-columns: 1fr; gap: 30px; }
   .footerMain { grid-template-columns: repeat(3, 1fr); }
 }
